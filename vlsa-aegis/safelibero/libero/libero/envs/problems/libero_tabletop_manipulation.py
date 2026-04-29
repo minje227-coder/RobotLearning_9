@@ -12,7 +12,7 @@ class Libero_Tabletop_Manipulation(BDDLBaseDomain):
         self.workspace_name = "main_table"
         self.visualization_sites_list = []
         if "table_full_size" in kwargs:
-            self.table_full_size = table_full_size
+            self.table_full_size = kwargs["table_full_size"]
         else:
             self.table_full_size = (1.0, 1.2, 0.05)
         self.table_offset = (0, 0, 0.90)

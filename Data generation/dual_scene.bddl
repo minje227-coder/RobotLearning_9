@@ -1,0 +1,41 @@
+(define (problem LIBERO_Dual_Tabletop_Manipulation)
+  (:domain robosuite)
+  (:language Two robots facing each other on a table)
+
+  (:regions
+      (object_region
+          (:target main_table)
+          (:ranges ((-0.10 -0.05 -0.05 0.05)))
+      )
+      (box_region
+          (:target main_table)
+          (:ranges ((-0.02 -0.02 0.02 0.02)))
+      )
+      (contain_region
+          (:target basket_1)
+      )
+  )
+
+  (:fixtures
+    main_table - table
+  )
+
+  (:objects
+    milk_1 - milk
+    basket_1 - basket
+  )
+
+  (:obj_of_interest
+    milk_1
+    basket_1
+  )
+
+  (:init
+    (On milk_1 main_table_object_region)
+    (On basket_1 main_table_box_region)
+  )
+
+  (:goal
+    (And (In milk_1 basket_1_contain_region))
+  )
+)

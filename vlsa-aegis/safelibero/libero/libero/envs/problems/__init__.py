@@ -6,3 +6,4 @@ from .libero_living_room_tabletop_manipulation import (
     Libero_Living_Room_Tabletop_Manipulation,
 )
 from .libero_kitchen_tabletop_manipulation import Libero_Kitchen_Tabletop_Manipulation
+import libero.libero.envs.problems.dual_tabletop_manipulation  # noqa

@@ -22,6 +22,7 @@ REGION_SAMPLERS = {
     "libero_kitchen_tabletop_manipulation": {
         "kitchen_table": Libero100TableRegionSampler
     },
+    "libero_dual_tabletop_manipulation": {"table": TableRegionSampler},
 }
 
 
