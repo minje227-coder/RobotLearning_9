@@ -20,6 +20,7 @@ env = OffScreenRenderEnv(
     camera_heights=RESOLUTION,
     camera_widths=RESOLUTION,
     camera_names=CAMERAS,
+    table_full_size=(0.6, 2.0, 0.05),  # (길이, 가로, 높이) 기본값: (1.0, 1.2, 0.05)
 )
 env.seed(0)
 env.reset()
