@@ -1,19 +1,48 @@
-import xml.etree.ElementTree as ET
 import numpy as np
 
-from libero.libero.envs.bddl_base_domain import TASK_MAPPING, register_problem
+from libero.libero.envs.bddl_base_domain import BDDLBaseDomain, TASK_MAPPING, register_problem
 
 _TabletopBase = TASK_MAPPING["libero_tabletop_manipulation"]
 
-# preview_dual.py 등에서 env 생성 전에 덮어쓰기 가능
-SIDE_DEPTH    = None   # x 방향 깊이, None이면 table_length/2 자동
-SIDE_WIDTH    = 0.5    # y 방향 너비 (m)
-SIDE_Y_OFFSET = None   # main_table 중심에서 y 거리, None이면 table_width/2 + side_width/2
-SIDE_X_OFFSET = 0.0    # 로봇 기준 x 추가 오프셋 (m)
+# 로봇 배치: None이면 기존 동작(책상 바깥, x=±(0.16+L/2), z=0)
+# 값이 주어지면 robot0=-X, robot1=+X 위치, 책상 위(z=table_top)에 올림
+ROBOT_X_OFFSET = None
+
+# None이면 로봇 클래스 기본 init_qpos 사용
+HOME_QPOS = None
 
 
 @register_problem
 class LIBERO_Dual_Tabletop_Manipulation(_TabletopBase):
+    def __init__(self, bddl_file_name, *args, **kwargs):
+        self.workspace_name = "main_table"
+        self.visualization_sites_list = []
+        if "table_full_size" in kwargs:
+            self.table_full_size = kwargs["table_full_size"]
+        else:
+            self.table_full_size = (1.0, 1.2, 0.05)
+        self.table_offset = (0, 0, 0.90)
+        self.z_offset = 0.01 - self.table_full_size[2]
+
+        kwargs.update(
+            {"robots": [f"OnTheGround{robot_name}" for robot_name in kwargs["robots"]]}
+        )
+        kwargs.update({"workspace_offset": self.table_offset})
+        kwargs.update({"arena_type": "table"})
+
+        if "scene_xml" not in kwargs or kwargs["scene_xml"] is None:
+            kwargs.update({"scene_xml": "scenes/libero_tabletop_base_style.xml"})
+        if "scene_properties" not in kwargs or kwargs["scene_properties"] is None:
+            kwargs.update(
+                {
+                    "scene_properties": {
+                        "floor_style": "light-gray",
+                        "wall_style": "light-gray-plaster",
+                    }
+                }
+            )
+
+        BDDLBaseDomain.__init__(self, bddl_file_name, *args, **kwargs)
 
     def _check_robot_configuration(self, robots):
         pass  # 1개 또는 2개 모두 허용
@@ -21,66 +50,33 @@ class LIBERO_Dual_Tabletop_Manipulation(_TabletopBase):
     def _load_model(self):
         super()._load_model()
 
-        if len(self.robots) == 2:
-            table_length = self.table_full_size[0]
-            xpos = np.array([0.16 + table_length / 2, 0, 0])
-            rot = np.array([0, 0, np.pi])
-            self.robots[1].robot_model.set_base_xpos(xpos)
-            self.robots[1].robot_model.set_base_ori(rot)
+        if HOME_QPOS is not None:
+            home_qpos = np.array(HOME_QPOS, dtype=float)
+            for robot in self.robots:
+                robot.init_qpos = home_qpos.copy()
 
-    def _setup_camera(self, mujoco_arena):
-        super()._setup_camera(mujoco_arena)
-        self._add_side_tables_to_arena(mujoco_arena)
+        # 책상 윗면 z (table_offset z; default 0.8)
+        try:
+            table_top_z = float(self.mujoco_arena.table_offset[2])
+        except Exception:
+            table_top_z = 0.8
 
-    def _add_side_tables_to_arena(self, mujoco_arena):
-        table_length = self.table_full_size[0]
-        table_width  = self.table_full_size[1]
-        table_height = self.table_full_size[2]
-
-        # arena에서 table body z 위치 가져오기
-        table_z = 0.0
-        for body in mujoco_arena.worldbody.iter('body'):
-            if 'table' in body.get('name', '').lower():
-                pos = body.get('pos', '0 0 0').split()
-                table_z = float(pos[2])
-                break
-
-        robot0_x = -(0.16 + table_length / 2)
-        robot1_x =  (0.16 + table_length / 2)
-
-        import libero.libero.envs.problems.dual_tabletop_manipulation as _mod
-        side_depth = _mod.SIDE_DEPTH if _mod.SIDE_DEPTH is not None else table_length / 2
-        side_width = _mod.SIDE_WIDTH
-        y_offset   = _mod.SIDE_Y_OFFSET if _mod.SIDE_Y_OFFSET is not None else table_width / 2 + side_width / 2
-        x_offset   = _mod.SIDE_X_OFFSET
-
-        configs = [
-            (robot0_x + x_offset, -y_offset, 'side_table_0l'),
-            (robot0_x + x_offset, +y_offset, 'side_table_0r'),
-            (robot1_x + x_offset, -y_offset, 'side_table_1l'),
-            (robot1_x + x_offset, +y_offset, 'side_table_1r'),
-        ]
-
-        for x, y, name in configs:
-            body = ET.Element('body', name=name, pos=f'{x} {y} {table_z}')
-            # collision geom (group 0)
-            ET.SubElement(body, 'geom',
-                name=f'{name}_col',
-                type='box',
-                size=f'{side_depth/2} {side_width/2} {table_height/2}',
-                rgba='0.76 0.61 0.44 1',
-                group='0',
-                contype='1',
-                conaffinity='1',
+        if ROBOT_X_OFFSET is not None:
+            # 두 로봇 모두 책상 위에 배치 (robot0=-X, robot1=+X)
+            self.robots[0].robot_model.set_base_xpos(
+                np.array([-ROBOT_X_OFFSET, 0.0, table_top_z])
             )
-            # visual geom (group 1)
-            ET.SubElement(body, 'geom',
-                name=f'{name}_vis',
-                type='box',
-                size=f'{side_depth/2} {side_width/2} {table_height/2}',
-                material='table_texture',
-                group='1',
-                contype='0',
-                conaffinity='0',
-            )
-            mujoco_arena.worldbody.append(body)
+            self.robots[0].robot_model.set_base_ori(np.array([0, 0, 0]))
+            if len(self.robots) == 2:
+                self.robots[1].robot_model.set_base_xpos(
+                    np.array([+ROBOT_X_OFFSET, 0.0, table_top_z])
+                )
+                self.robots[1].robot_model.set_base_ori(np.array([0, 0, np.pi]))
+        else:
+            # 기존 동작: robot1만 반대편 바깥쪽으로
+            if len(self.robots) == 2:
+                table_length = self.table_full_size[0]
+                xpos = np.array([0.16 + table_length / 2, 0, 0])
+                rot = np.array([0, 0, np.pi])
+                self.robots[1].robot_model.set_base_xpos(xpos)
+                self.robots[1].robot_model.set_base_ori(rot)

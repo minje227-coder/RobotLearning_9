@@ -74,6 +74,14 @@ class Basket(GoogleScannedObject):
 
 
 @register_object
+class TrashCan(GoogleScannedObject):
+    def __init__(self, name="trash_can", obj_name="trash_can"):
+        super().__init__(name, obj_name)
+        self.rotation = (0, 0)
+        self.rotation_axis = "x"
+
+
+@register_object
 class Chefmate8Frypan(GoogleScannedObject):
     def __init__(self, name="chefmate_8_frypan", obj_name="chefmate_8_frypan"):
         super().__init__(name, obj_name)

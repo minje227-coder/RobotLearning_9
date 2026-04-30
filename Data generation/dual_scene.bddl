@@ -1,6 +1,6 @@
 (define (problem LIBERO_Dual_Tabletop_Manipulation)
   (:domain robosuite)
-  (:language Two robots facing each other on a table)
+  (:language Two mounted Panda robots facing each other on a table)
 
   (:regions
       (object_region
