@@ -15,6 +15,7 @@ class ControlEnv:
         bddl_file_name,
         robots=["Panda"],
         controller="OSC_POSE",
+        controller_configs=None,
         gripper_types="default",
         initialization_noise=None,
         use_camera_obs=True,
@@ -45,7 +46,8 @@ class ControlEnv:
             bddl_file_name
         ), f"[error] {bddl_file_name} does not exist!"
 
-        controller_configs = suite.load_controller_config(default_controller=controller)
+        if controller_configs is None:
+            controller_configs = suite.load_controller_config(default_controller=controller)
 
         problem_info = BDDLUtils.get_problem_info(bddl_file_name)
         # Check if we're using a multi-armed environment and use env_configuration argument if so
