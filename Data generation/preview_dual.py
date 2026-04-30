@@ -12,7 +12,7 @@ import libero.libero.envs.problems.dual_tabletop_manipulation as dual_mod  # noq
 # 환경 설정 (직접 수정)
 # ==============================================================================
 # 로봇 배치 (None이면 기존 책상 바깥쪽; 값 주면 책상 위에 robot0=-X, robot1=+X)
-ROBOT_X_OFFSET = 0.3
+ROBOT_X_OFFSET = 0.28
 
 # None이면 dual 문제 클래스 / 로봇 기본 home pose 사용
 #HOME_QPOS = [0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785]
@@ -20,8 +20,8 @@ HOME_QPOS = [0.0, -1.3, 0.0, -2.356, 0.0, 1.0, 0.785]
 
 # 객체 위치 ([min, max] 범위; min==max면 고정 위치)
 # milk, trash_can: main table 중심 기준
-MILK_X   = [-0.6, -0.6]
-MILK_Y   = [-0.6, -0.6]
+MILK_X   = [-0.4, -0.4]
+MILK_Y   = [-0.5, -0.5]
 MILK_REF = "table"          # "table" or "robot"
 
 
