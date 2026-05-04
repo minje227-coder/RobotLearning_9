@@ -1,0 +1,5 @@
+Data generation/dataset_*/
+Data generation/lerobot_*_dataset*/
+Data generation/output/
+Data generation/*_debug_videos/
+Data generation/__pycache__/
