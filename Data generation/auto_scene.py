@@ -24,7 +24,7 @@ from robosuite.utils.camera_utils import (
 # ==============================================================================
 # 환경 설정 (직접 수정)
 # ==============================================================================
-ROBOT_X_OFFSET = 0.28
+ROBOT_X_OFFSET = 0.48
 HOME_QPOS = [0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785]
 ROBOT1_PASSIVE_QPOS = [0.0, -1.3, 0.0, -2.35, 0.0, 1.0, 0.785]
 ROBOT1_PASSIVE_GRIPPER = [0.020833, -0.020833]
@@ -35,8 +35,8 @@ GRIPPER_OPEN  = -1.0   # gripper 열기 (approach / release 때)
 GRIPPER_CLOSE =  1.0   # gripper 닫기 (집은 채 이동)
 
 # milk 초기 위치: main table 기준 중심 + 반경(원형 샘플링)
-MILK_CENTER = (-0.35, -0.35)
-MILK_RADIUS = 0.14
+MILK_CENTER = (-0.13, -0.35)
+MILK_RADIUS = 0.1
 # 잉여 milk는 MILK_CENTER의 y축 대칭 (x 부호 반전, y 유지)
 DISTRACTOR_MILK_CENTER = (-MILK_CENTER[0], MILK_CENTER[1])
 DISTRACTOR_MILK_RADIUS = MILK_RADIUS
@@ -46,7 +46,7 @@ TRASH_CAN_CENTER = (0.00, 0.35)
 
 # trash_can 내부 목표점: trash_can 중심 기준 local xy + 반경(원형 샘플링)
 TARGET_CENTER_LOCAL = (0.00, 0.00)
-TARGET_RADIUS_LOCAL = 0.1
+TARGET_RADIUS_LOCAL = 0.12
 
 # 목표 허용 박스 반폭 (원형 샘플링 점 주변의 작은 목표 영역)
 TARGET_BOX_HALF_SIZE = 0.03
@@ -59,12 +59,23 @@ TRASH_BOTTOM_THICK = 0.010
 TRASH_MASS = 1000.0
 
 # trajectory 테스트 제어 상수
-MAX_STEPS = 400                 # 전체 scripted trajectory 최대 step 수 (fps=10)
+MAX_STEPS = 700                 # 전체 scripted trajectory 최대 step 수 (fps=10)
 RESOLUTION = 256                # 렌더링 해상도
 OPEN_GRIPPER_INIT_STEPS = 8     # 시작 직후 gripper를 열린 상태로 유지하는 step 수
 GRIP_CLOSE_HOLD_STEPS = 12      # 집기 위해 gripper를 닫은 채 유지하는 step 수
 GRIP_OPEN_HOLD_STEPS = 10       # 놓기 위해 gripper를 연 채 유지하는 step 수
-JOINT_TOL = 0.08                # joint waypoint 도착 판정 최대 오차 (controller settling 여유)
+RETREAT_HOLD_STEPS = 20         # retreat 자세에 머물 step 수 (영상 끝 정지 화면용)
+JOINT_TOL = 0.15                # 정식 waypoint 도착 판정 최대 오차
+#JOINT_TOL_MID = 0.4            # 중간 보간점(_mid)은 빡세게 안 가도 되게 — 큰 값일수록 빨리 통과
+PHASE_TIMEOUT_STEPS = 40        # 한 waypoint에 이 step 안에 못 도달하면 강제로 다음 phase 진행
+# 특정 waypoint만 별도 tol을 주고싶을 때 (없으면 위 기본값 사용)
+PHASE_TOL_OVERRIDE = {
+    "move_preplace": 0.25,
+}
+# 특정 waypoint만 별도 timeout을 주고싶을 때 (없으면 PHASE_TIMEOUT_STEPS 사용)
+PHASE_TIMEOUT_OVERRIDE = {
+    "return_home": 15,
+}
 IK_MAX_ITERS = 250              # waypoint당 IK 반복 최대 횟수
 IK_POS_TOL = 0.003              # IK 종료용 end-effector 위치 오차
 IK_AXIS_TOL = 0.02              # IK 종료용 end-effector 접근축 오차
@@ -75,10 +86,11 @@ IK_NULLSPACE_GAIN = 0.05        # IK 해가 튀지 않도록 seed 자세로 약�
 IK_MAX_DELTA_Q = 0.15           # IK 1회 반복당 허용할 최대 joint 업데이트 크기
 TARGET_DOWN_AXIS_WORLD = [0.0, 0.0, -1.0]  # grip_site 로컬 z축이 향해야 하는 world 방향
 TARGET_FORWARD_AXIS_WORLD = [1.0, 0.0, 0.0]  # grip_site 로컬 x축이 대체로 향해야 하는 world 방향
-PREGRASP_Z_OFFSET = 0.2          # milk 중심에서 pregrasp waypoint까지의 z 오프셋
-POSTGRASP_LIFT_Z_OFFSET = 0.35   # 잡은 직후 수직 상승 waypoint까지의 z 오프셋 (milk 중심 기준)
+GRASP_Z_OFFSET = -0.00           # milk 중심에서 grasp waypoint까지의 z 오프셋 (음수면 깊이 들어감)
+PREGRASP_Z_OFFSET = 0.25          # milk 중심에서 pregrasp waypoint까지의 z 오프셋
+POSTGRASP_LIFT_Z_OFFSET = 0.4   # 잡은 직후 수직 상승 waypoint까지의 z 오프셋 (milk 중심 기준)
 PREPLACE_Z_OFFSET = PREGRASP_Z_OFFSET        # trash target에서 preplace waypoint까지의 z 오프셋
-RETREAT_Z_OFFSET = 0.15         # trash target에서 retreat waypoint까지의 z 오프셋
+RETREAT_Z_OFFSET = 0.3         # trash target에서 retreat waypoint까지의 z 오프셋
 WAYPOINT_INTERP_ALPHA = 0.5     # 인접한 두 joint waypoint 사이에 넣을 중간점 비율
 
 # JOINT_POSITION controller custom config
@@ -385,7 +397,16 @@ def project_world_points_to_camera_px(camera_name, points_xyz):
 
 def draw_birdview_regions(img):
     out = img.copy()
+    # milk_1 sampling disk (green)
     cv2.polylines(out, [project_circle_to_birdview(MILK_CENTER, MILK_RADIUS)], True, (80, 220, 80), 2)
+    # milk_2 (distractor) sampling disk (yellow-green, dashed-style 다른 색)
+    cv2.polylines(
+        out,
+        [project_circle_to_birdview(DISTRACTOR_MILK_CENTER, DISTRACTOR_MILK_RADIUS)],
+        True,
+        (80, 220, 220),
+        2,
+    )
 
     target_center_global = (
         TRASH_CAN_CENTER[0] + TARGET_CENTER_LOCAL[0],
@@ -692,7 +713,7 @@ frames = []
 actions = []
 
 milk_pos = np.asarray(obs["milk_1_pos"], dtype=float)
-milk_pick_xyz = milk_pos + np.array([0.0, 0.0, 0.02])
+milk_pick_xyz = milk_pos + np.array([0.0, 0.0, GRASP_Z_OFFSET])
 milk_above_xyz = milk_pos + np.array([0.0, 0.0, PREGRASP_Z_OFFSET])
 postgrasp_lift_xyz = milk_pos + np.array([0.0, 0.0, POSTGRASP_LIFT_Z_OFFSET])
 trash_target_xyz = np.asarray(
@@ -720,18 +741,18 @@ place_qpos = solve_ik_for_pose(env.env.sim, robot0, trash_target_xyz, target_ori
 retreat_qpos = solve_ik_for_pose(env.env.sim, robot0, retreat_xyz, target_ori_mat, place_qpos)
 
 # IK 수렴 검증: 각 waypoint별 pos/axis 오차 + 실제 grip_site z축 (down 고정 확인)
-for _name, _xyz, _q in [
-    ("pregrasp",       milk_above_xyz,      pregrasp_qpos),
-    ("grasp",          milk_pick_xyz,       grasp_qpos),
-    ("postgrasp_lift", postgrasp_lift_xyz,  postgrasp_lift_qpos),
-    ("lift",           milk_above_xyz,      lift_qpos),
-    ("preplace",       trash_above_xyz,     preplace_qpos),
-    ("place",          trash_target_xyz,    place_qpos),
-    ("retreat",        retreat_xyz,         retreat_qpos),
+for _name, _xyz, _q, _ori_target in [
+    ("pregrasp",       milk_above_xyz,      pregrasp_qpos,       target_ori_mat),
+    ("grasp",          milk_pick_xyz,       grasp_qpos,          target_ori_mat),
+    ("postgrasp_lift", postgrasp_lift_xyz,  postgrasp_lift_qpos, target_ori_mat),
+    ("lift",           milk_above_xyz,      lift_qpos,           target_ori_mat),
+    ("preplace",       trash_above_xyz,     preplace_qpos,       target_ori_mat),
+    ("place",          trash_target_xyz,    place_qpos,          target_ori_mat),
+    ("retreat",        retreat_xyz,         retreat_qpos,        target_ori_mat),
 ]:
-    print_waypoint_ik_debug(env.env.sim, robot0, _name, _xyz, target_ori_mat, _q)
+    print_waypoint_ik_debug(env.env.sim, robot0, _name, _xyz, _ori_target, _q)
     _ori = get_grip_site_orientation_for_qpos(env.env.sim, robot0, _q)
-    print(f"{_name}_eef_z_axis_world={_ori[:, 2].tolist()}  (target=[0,0,-1])")
+    print(f"{_name}_eef_z_axis_world={_ori[:, 2].tolist()}  eef_x={_ori[:, 0].round(2).tolist()}")
 
 IK_REFERENCE_NAME = robot0.gripper.important_sites["grip_site"]
 
@@ -750,37 +771,37 @@ def get_ik_reference_pose(sim):
 
 
 move_sequence = [
-    ("move_pregrasp_mid", interpolate_joint_waypoint(home_qpos, pregrasp_qpos), GRIPPER_OPEN),
     ("move_pregrasp", pregrasp_qpos, GRIPPER_OPEN),
-    ("move_grasp_mid", interpolate_joint_waypoint(pregrasp_qpos, grasp_qpos), GRIPPER_OPEN),
-    ("move_grasp", grasp_qpos, GRIPPER_OPEN),
+    ("move_grasp",    grasp_qpos,    GRIPPER_OPEN),
 ]
 post_grasp_sequence = [
     # 잡은 직후 POSTGRASP_LIFT_Z_OFFSET 만큼 수직 상승 (z 독립 조절)
-    ("back_to_pregrasp_mid", interpolate_joint_waypoint(grasp_qpos, postgrasp_lift_qpos), GRIPPER_CLOSE),
-    ("back_to_pregrasp",     postgrasp_lift_qpos, GRIPPER_CLOSE),
-    ("lift_milk_mid", interpolate_joint_waypoint(postgrasp_lift_qpos, lift_qpos), GRIPPER_CLOSE),
-    ("lift_milk", lift_qpos, GRIPPER_CLOSE),
-    ("move_preplace_mid", interpolate_joint_waypoint(lift_qpos, preplace_qpos), GRIPPER_CLOSE),
-    ("move_preplace", preplace_qpos, GRIPPER_CLOSE),
-    ("move_place_mid", interpolate_joint_waypoint(preplace_qpos, place_qpos), GRIPPER_CLOSE),
-    ("move_place", place_qpos, GRIPPER_CLOSE),
+    ("back_to_pregrasp", postgrasp_lift_qpos, GRIPPER_CLOSE),
+    ("lift_milk",        lift_qpos,           GRIPPER_CLOSE),
+    ("move_preplace",    preplace_qpos,       GRIPPER_CLOSE),
+    ("move_place",       place_qpos,          GRIPPER_CLOSE),
 ]
+_home_target = np.asarray(HOME_QPOS, dtype=float)
 retreat_sequence = [
-    ("retreat_mid", interpolate_joint_waypoint(place_qpos, retreat_qpos), GRIPPER_OPEN),
-    ("retreat", retreat_qpos, GRIPPER_OPEN),
+    ("retreat",     retreat_qpos,  GRIPPER_OPEN),
+    ("return_home", _home_target,  GRIPPER_OPEN),
 ]
 
 phase = "open_then_approach"
+_prev_phase = None
 phase_steps = 0
 close_hold_steps = 0
 open_hold_steps = 0
+retreat_hold_steps = 0
 done = False
 move_index = 0
 post_grasp_index = 0
 retreat_index = 0
 
 for _ in range(MAX_STEPS):
+    if phase != _prev_phase:
+        print(f"[phase] step={len(actions):3d} -> {phase}")
+        _prev_phase = phase
     cur = obs["robot0_joint_pos"]
     if phase == "open_then_approach":
         robot0_action = make_joint_position_action(cur, cur, gripper_cmd=GRIPPER_OPEN)
@@ -792,7 +813,12 @@ for _ in range(MAX_STEPS):
     elif phase in [name for name, _, _ in move_sequence]:
         _, target_qpos, gripper_cmd = move_sequence[move_index]
         robot0_action = make_joint_position_action(target_qpos, cur, gripper_cmd=gripper_cmd)
-        if joint_distance_to(obs, target_qpos) < JOINT_TOL:
+        _tol = PHASE_TOL_OVERRIDE.get(phase, JOINT_TOL_MID if phase.endswith("_mid") else JOINT_TOL)
+        _to = PHASE_TIMEOUT_OVERRIDE.get(phase, PHASE_TIMEOUT_STEPS)
+        _timed_out = (_to is not None) and (phase_steps >= _to)
+        if joint_distance_to(obs, target_qpos) < _tol or _timed_out:
+            if _timed_out:
+                print(f"[timeout] {phase}: jd={joint_distance_to(obs, target_qpos):.3f}, advancing")
             move_index += 1
             if move_index >= len(move_sequence):
                 phase = "close_gripper"
@@ -811,7 +837,12 @@ for _ in range(MAX_STEPS):
     elif phase in [name for name, _, _ in post_grasp_sequence]:
         _, target_qpos, gripper_cmd = post_grasp_sequence[post_grasp_index]
         robot0_action = make_joint_position_action(target_qpos, cur, gripper_cmd=gripper_cmd)
-        if joint_distance_to(obs, target_qpos) < JOINT_TOL:
+        _tol = PHASE_TOL_OVERRIDE.get(phase, JOINT_TOL_MID if phase.endswith("_mid") else JOINT_TOL)
+        _to = PHASE_TIMEOUT_OVERRIDE.get(phase, PHASE_TIMEOUT_STEPS)
+        _timed_out = (_to is not None) and (phase_steps >= _to)
+        if joint_distance_to(obs, target_qpos) < _tol or _timed_out:
+            if _timed_out:
+                print(f"[timeout] {phase}: jd={joint_distance_to(obs, target_qpos):.3f}, advancing")
             post_grasp_index += 1
             if post_grasp_index >= len(post_grasp_sequence):
                 phase = "open_gripper"
@@ -827,13 +858,25 @@ for _ in range(MAX_STEPS):
             phase = retreat_sequence[retreat_index][0]
             phase_steps = 0
 
+    elif phase == "retreat_hold":
+        # 마지막 home 자세 유지 (gripper 열어둠)
+        robot0_action = make_joint_position_action(_home_target, cur, gripper_cmd=GRIPPER_OPEN)
+        retreat_hold_steps += 1
+        if retreat_hold_steps >= RETREAT_HOLD_STEPS:
+            done = True
+
     else:
         _, target_qpos, gripper_cmd = retreat_sequence[retreat_index]
         robot0_action = make_joint_position_action(target_qpos, cur, gripper_cmd=gripper_cmd)
-        if joint_distance_to(obs, target_qpos) < JOINT_TOL:
+        _tol = PHASE_TOL_OVERRIDE.get(phase, JOINT_TOL_MID if phase.endswith("_mid") else JOINT_TOL)
+        _to = PHASE_TIMEOUT_OVERRIDE.get(phase, PHASE_TIMEOUT_STEPS)
+        _timed_out = (_to is not None) and (phase_steps >= _to)
+        if joint_distance_to(obs, target_qpos) < _tol or _timed_out:
+            if _timed_out:
+                print(f"[timeout] {phase}: jd={joint_distance_to(obs, target_qpos):.3f}, advancing")
             retreat_index += 1
             if retreat_index >= len(retreat_sequence):
-                done = True
+                phase = "retreat_hold"
             else:
                 phase = retreat_sequence[retreat_index][0]
             phase_steps = 0
@@ -841,15 +884,6 @@ for _ in range(MAX_STEPS):
     action = make_dual_action(robot0_action)
     actions.append(action)
     obs, _, env_done, _ = env.step(action)
-    # 매 step마다 phase + joint 거리 + 실제 eef z축 출력
-    eef_ori = np.asarray(env.env.sim.data.get_site_xmat(robot0.gripper.important_sites["grip_site"]), dtype=float)
-    if phase in [n for n, _, _ in move_sequence + post_grasp_sequence + retreat_sequence]:
-        _seq = move_sequence + post_grasp_sequence + retreat_sequence
-        _tgt = next(q for n, q, _ in _seq if n == phase)
-        _jd = joint_distance_to(obs, _tgt)
-    else:
-        _jd = -1.0
-    print(f"step={len(actions):3d} phase={phase:22s} jd={_jd:.3f} eef_z={eef_ori[:,2].round(2).tolist()}")
     lock_robot1_pose(env.env.sim, env.env.robots[1])
     obs = env.env._get_observations()
     frames.append(
@@ -861,7 +895,7 @@ for _ in range(MAX_STEPS):
         )
     )
     phase_steps += 1
-    if done or env_done:
+    if done:   # env_done은 무시 — goal 달성해도 retreat까지 끝까지 진행
         break
 
 imageio.mimwrite(args.video_out, frames, fps=10)
