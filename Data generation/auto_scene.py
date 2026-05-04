@@ -37,8 +37,9 @@ GRIPPER_CLOSE =  1.0   # gripper 닫기 (집은 채 이동)
 # milk 초기 위치: main table 기준 중심 + 반경(원형 샘플링)
 MILK_CENTER = (-0.35, -0.35)
 MILK_RADIUS = 0.14
-DISTRACTOR_MILK_CENTER = (0.40, 0.50)
-DISTRACTOR_MILK_RADIUS = 0.14
+# 잉여 milk는 MILK_CENTER의 y축 대칭 (x 부호 반전, y 유지)
+DISTRACTOR_MILK_CENTER = (-MILK_CENTER[0], MILK_CENTER[1])
+DISTRACTOR_MILK_RADIUS = MILK_RADIUS
 
 # trash_can 배치 위치: main table 기준 중심
 TRASH_CAN_CENTER = (0.00, 0.35)
@@ -112,7 +113,6 @@ rng = random.Random(args.seed)
 milk_xy = sample_point_in_disk(MILK_CENTER, MILK_RADIUS, rng)
 target_local_xy = sample_point_in_disk(TARGET_CENTER_LOCAL, TARGET_RADIUS_LOCAL, rng)
 milk_xy_2 = sample_point_in_disk(DISTRACTOR_MILK_CENTER, DISTRACTOR_MILK_RADIUS, rng)
-trash_can_center_2 = (TRASH_CAN_CENTER[0], -TRASH_CAN_CENTER[1])
 
 milk_x = tiny_range(milk_xy[0])
 milk_y = tiny_range(milk_xy[1])
@@ -120,8 +120,6 @@ milk_x_2 = tiny_range(milk_xy_2[0])
 milk_y_2 = tiny_range(milk_xy_2[1])
 trash_x = tiny_range(TRASH_CAN_CENTER[0])
 trash_y = tiny_range(TRASH_CAN_CENTER[1])
-trash_x_2 = tiny_range(trash_can_center_2[0])
-trash_y_2 = tiny_range(trash_can_center_2[1])
 
 # ==============================================================================
 # trash_can.xml 동적 생성: 내부 목표 영역을 sampled local target으로 이동
@@ -172,7 +170,7 @@ TRASH_XML_PATH.write_text(
 )
 
 # ==============================================================================
-# dual problem 설정: robot0가 target, robot1 / milk_2 / trash_can_2는 잉여
+# dual problem 설정: robot0가 target, robot1 / milk_2는 잉여 (distractor)
 # ==============================================================================
 dual_mod.ROBOT_X_OFFSET = ROBOT_X_OFFSET
 dual_mod.HOME_QPOS = HOME_QPOS
@@ -197,23 +195,17 @@ bddl_content = f"""(define (problem {problem_name})
           (:ranges (({trash_x[0]} {trash_y[0]} {trash_x[1]} {trash_y[1]})))
           (:yaw_rotation ((0.0 0.0)))
       )
-      (trash_can_region_2
-          (:target main_table)
-          (:ranges (({trash_x_2[0]} {trash_y_2[0]} {trash_x_2[1]} {trash_y_2[1]})))
-          (:yaw_rotation ((0.0 0.0)))
-      )
       (contain_region
           (:target trash_can_1)
       )
   )
   (:fixtures main_table - table)
-  (:objects milk_1 milk_2 - milk  trash_can_1 trash_can_2 - trash_can)
+  (:objects milk_1 milk_2 - milk  trash_can_1 - trash_can)
   (:obj_of_interest milk_1 trash_can_1)
   (:init
     (On milk_1 main_table_milk_region)
     (On milk_2 main_table_milk_region_2)
     (On trash_can_1 main_table_trash_can_region)
-    (On trash_can_2 main_table_trash_can_region_2)
   )
   (:goal
     (And (In milk_1 trash_can_1_contain_region))
@@ -291,7 +283,6 @@ def lock_robot1_pose(sim, robot):
 
 
 set_free_joint_xy(env.env.sim, "trash_can_1_joint0", TRASH_CAN_CENTER[0], TRASH_CAN_CENTER[1])
-set_free_joint_xy(env.env.sim, "trash_can_2_joint0", trash_can_center_2[0], trash_can_center_2[1])
 lock_robot1_pose(env.env.sim, env.env.robots[1])
 env.env.sim.forward()
 BIRDVIEW_WORLD_TO_CAMERA = get_camera_transform_matrix(
@@ -884,7 +875,6 @@ print(f"place_qpos={place_qpos.tolist()}")
 print(f"milk_xy={milk_xy}")
 print(f"milk_xy_2={milk_xy_2}")
 print(f"trash_can_center={list(TRASH_CAN_CENTER)}")
-print(f"trash_can_center_2={list(trash_can_center_2)}")
 print(f"target_local_xy={[target_x, target_y]}")
 print(f"target_global_xy={trash_goal_global}")
 print(f"ik_grip_site={IK_REFERENCE_NAME}")
