@@ -11,6 +11,16 @@ from lerobot.datasets.lerobot_dataset import LeRobotDataset
 
 DEFAULT_FPS = 10
 DEFAULT_RESOLUTION = 256
+ARM_STATE_ACTION_NAMES = [
+    "joint_1",
+    "joint_2",
+    "joint_3",
+    "joint_4",
+    "joint_5",
+    "joint_6",
+    "joint_7",
+    "gripper",
+]
 
 
 def parse_args():
@@ -18,6 +28,12 @@ def parse_args():
     parser.add_argument("--raw-dir", type=pathlib.Path, required=True)
     parser.add_argument("--repo-id", required=True)
     parser.add_argument("--output-dir", type=pathlib.Path, required=True)
+    parser.add_argument("--robot-type", default="dual_panda_robot0")
+    parser.add_argument(
+        "--task-description",
+        default=None,
+        help="Override the task/description string stored in raw episodes.",
+    )
     parser.add_argument("--fps", type=int, default=DEFAULT_FPS)
     parser.add_argument("--resolution", type=int, default=DEFAULT_RESOLUTION)
     parser.add_argument("--overwrite", action="store_true")
@@ -71,31 +87,31 @@ def create_dataset(args):
 
     features = {
         "observation.images.side": {
-            "dtype": "image",
+            "dtype": "video",
             "shape": (args.resolution, args.resolution, 3),
-            "names": ["height", "width", "channel"],
+            "names": ["height", "width", "channels"],
         },
         "observation.images.wrist": {
-            "dtype": "image",
+            "dtype": "video",
             "shape": (args.resolution, args.resolution, 3),
-            "names": ["height", "width", "channel"],
+            "names": ["height", "width", "channels"],
         },
         "observation.state": {
             "dtype": "float32",
             "shape": (8,),
-            "names": ["state"],
+            "names": ARM_STATE_ACTION_NAMES,
         },
         "action": {
             "dtype": "float32",
             "shape": (8,),
-            "names": ["action"],
+            "names": ARM_STATE_ACTION_NAMES,
         },
     }
 
     dataset = LeRobotDataset.create(
         repo_id=args.repo_id,
         root=args.output_dir,
-        robot_type="dual_panda_robot0",
+        robot_type=args.robot_type,
         fps=args.fps,
         features=features,
         use_videos=True,
@@ -108,6 +124,8 @@ def create_dataset(args):
     try:
         for episode_path in episode_paths:
             side, wrist, state, action, task = load_raw_episode(episode_path)
+            if args.task_description is not None:
+                task = args.task_description
             for idx in range(side.shape[0]):
                 dataset.add_frame(
                     {
