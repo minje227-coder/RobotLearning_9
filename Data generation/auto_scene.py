@@ -35,7 +35,7 @@ GRIPPER_OPEN  = -1.0   # gripper 열기 (approach / release 때)
 GRIPPER_CLOSE =  1.0   # gripper 닫기 (집은 채 이동)
 
 # milk 초기 위치: 둘 다 robot0 쪽(x 음수) 영역에 한 묶음으로 배치
-# (영수형 제안: 한쪽에 물체들 모아두기)
+# (New 제안: 한쪽에 물체들 모아두기)
 # milk_1, milk_2 모두 같은 y에 배치하되 x=0 기준으로 좌우 대칭
 # robot0/robot1 trajectory가 x=0 중간선 기준 거울 대칭이 되어 정중앙에서 충돌
 MILK_CENTER = (-0.30, -0.20)
