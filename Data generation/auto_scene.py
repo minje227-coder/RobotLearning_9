@@ -7,7 +7,7 @@ import random
 import sys
 import tempfile
 
-sys.path.insert(0, os.path.expanduser("~/RobotLearning_9/vlsa-aegis/safelibero"))
+sys.path.insert(0, os.path.expanduser("/home/hannuri/works/work/RobotLearning_9-main/vlsa-aegis/safelibero"))
 
 import cv2
 import imageio
@@ -26,7 +26,7 @@ from robosuite.utils.camera_utils import (
 # ==============================================================================
 ROBOT_X_OFFSET = 0.28
 HOME_QPOS = [0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785]
-ROBOT1_PASSIVE_QPOS = [0.0, -1.3, 0.0, -2.35, 0.0, 1.0, 0.785]
+ROBOT1_PASSIVE_QPOS = [0.0, 0.3, 0.0, -2.3, 0.0, 0.5, 0.785]   # 팔을 테이블 중앙·낮은 고도로 뻗음 (robot0 transit 경로 차단)
 ROBOT1_PASSIVE_GRIPPER = [0.020833, -0.020833]
 ROBOT1_PASSIVE_GRIPPER_ACTION = -1.0   # robot1 gripper 열어둠 (반전 적용)
 
@@ -34,14 +34,26 @@ ROBOT1_PASSIVE_GRIPPER_ACTION = -1.0   # robot1 gripper 열어둠 (반전 적용
 GRIPPER_OPEN  = -1.0   # gripper 열기 (approach / release 때)
 GRIPPER_CLOSE =  1.0   # gripper 닫기 (집은 채 이동)
 
-# milk 초기 위치: main table 기준 중심 + 반경(원형 샘플링)
-MILK_CENTER = (-0.35, -0.35)
-MILK_RADIUS = 0.14
-DISTRACTOR_MILK_CENTER = (0.40, 0.50)
-DISTRACTOR_MILK_RADIUS = 0.14
+# milk 초기 위치: 둘 다 robot0 쪽(x 음수) 영역에 한 묶음으로 배치
+# (영수형 제안: 한쪽에 물체들 모아두기)
+# milk_1, milk_2 모두 같은 y에 배치하되 x=0 기준으로 좌우 대칭
+# robot0/robot1 trajectory가 x=0 중간선 기준 거울 대칭이 되어 정중앙에서 충돌
+MILK_CENTER = (-0.30, -0.20)
+MILK_RADIUS = 0.05
+DISTRACTOR_MILK_CENTER = (0.30, -0.20)   # milk_1의 x 반전 (대칭)
+DISTRACTOR_MILK_RADIUS = 0.05
 
-# trash_can 배치 위치: main table 기준 중심
-TRASH_CAN_CENTER = (0.00, 0.35)
+# trash_can_1: milk(-x, -y)와 대각선 반대편의 단일 목표 박스
+# 원래 검증된 (0, 0.35) 근처 — robot0 reach 안전 영역
+TRASH_CAN_CENTER = (0.00, 0.30)
+
+# trash_can_2: BDDL 정의상 제거 불가 → 시야 외곽으로 밀어둠 (실제 목표는 trash_can_1만)
+TRASH_CAN_2_CENTER = (0.40, 0.45)
+
+# 장애물: robot의 실제 joint-space 호 경로 위에 정확히 배치
+# 측정된 transit 중간 ee 위치 (step 110): (-0.105, -0.077)
+ENABLE_OBSTACLE = False
+OBSTACLE_CENTER = (-0.105, -0.077)
 
 # trash_can 내부 목표점: trash_can 중심 기준 local xy + 반경(원형 샘플링)
 TARGET_CENTER_LOCAL = (0.00, 0.00)
@@ -61,9 +73,9 @@ TRASH_MASS = 1000.0
 MAX_STEPS = 400                 # 전체 scripted trajectory 최대 step 수 (fps=10)
 RESOLUTION = 256                # 렌더링 해상도
 OPEN_GRIPPER_INIT_STEPS = 8     # 시작 직후 gripper를 열린 상태로 유지하는 step 수
-GRIP_CLOSE_HOLD_STEPS = 12      # 집기 위해 gripper를 닫은 채 유지하는 step 수
+GRIP_CLOSE_HOLD_STEPS = 20      # 집기 위해 gripper를 닫은 채 유지하는 step 수
 GRIP_OPEN_HOLD_STEPS = 10       # 놓기 위해 gripper를 연 채 유지하는 step 수
-JOINT_TOL = 0.08                # joint waypoint 도착 판정 최대 오차 (controller settling 여유)
+JOINT_TOL = 0.12                # joint waypoint 도착 판정 최대 오차 (controller settling 여유)
 IK_MAX_ITERS = 250              # waypoint당 IK 반복 최대 횟수
 IK_POS_TOL = 0.003              # IK 종료용 end-effector 위치 오차
 IK_AXIS_TOL = 0.02              # IK 종료용 end-effector 접근축 오차
@@ -74,8 +86,9 @@ IK_NULLSPACE_GAIN = 0.05        # IK 해가 튀지 않도록 seed 자세로 약�
 IK_MAX_DELTA_Q = 0.15           # IK 1회 반복당 허용할 최대 joint 업데이트 크기
 TARGET_DOWN_AXIS_WORLD = [0.0, 0.0, -1.0]  # grip_site 로컬 z축이 향해야 하는 world 방향
 TARGET_FORWARD_AXIS_WORLD = [1.0, 0.0, 0.0]  # grip_site 로컬 x축이 대체로 향해야 하는 world 방향
-PREGRASP_Z_OFFSET = 0.2          # milk 중심에서 pregrasp waypoint까지의 z 오프셋
-POSTGRASP_LIFT_Z_OFFSET = 0.35   # 잡은 직후 수직 상승 waypoint까지의 z 오프셋 (milk 중심 기준)
+PREGRASP_Z_OFFSET = 0.20         # milk 중심에서 pregrasp waypoint까지의 z 오프셋
+TRANSIT_Z_OFFSET = 0.06          # 잡은 후 transit 시 z (병 본체와 정통 충돌하도록)
+POSTGRASP_LIFT_Z_OFFSET = 0.15   # 잡은 직후 수직 상승 waypoint까지의 z 오프셋 (transit과 가까워 milk drop 방지)
 PREPLACE_Z_OFFSET = PREGRASP_Z_OFFSET        # trash target에서 preplace waypoint까지의 z 오프셋
 RETREAT_Z_OFFSET = 0.15         # trash target에서 retreat waypoint까지의 z 오프셋
 WAYPOINT_INTERP_ALPHA = 0.5     # 인접한 두 joint waypoint 사이에 넣을 중간점 비율
@@ -112,7 +125,7 @@ rng = random.Random(args.seed)
 milk_xy = sample_point_in_disk(MILK_CENTER, MILK_RADIUS, rng)
 target_local_xy = sample_point_in_disk(TARGET_CENTER_LOCAL, TARGET_RADIUS_LOCAL, rng)
 milk_xy_2 = sample_point_in_disk(DISTRACTOR_MILK_CENTER, DISTRACTOR_MILK_RADIUS, rng)
-trash_can_center_2 = (TRASH_CAN_CENTER[0], -TRASH_CAN_CENTER[1])
+trash_can_center_2 = TRASH_CAN_2_CENTER
 
 milk_x = tiny_range(milk_xy[0])
 milk_y = tiny_range(milk_xy[1])
@@ -128,7 +141,7 @@ trash_y_2 = tiny_range(trash_can_center_2[1])
 # ==============================================================================
 TRASH_XML_PATH = pathlib.Path(
     os.path.expanduser(
-        "~/RobotLearning_9/vlsa-aegis/safelibero/libero/libero/assets/stable_scanned_objects/trash_can/trash_can.xml"
+        "/home/hannuri/works/work/RobotLearning_9-main/vlsa-aegis/safelibero/libero/libero/assets/stable_scanned_objects/trash_can/trash_can.xml"
     )
 )
 iw_half = TRASH_INNER_WIDTH / 2
@@ -177,6 +190,17 @@ TRASH_XML_PATH.write_text(
 dual_mod.ROBOT_X_OFFSET = ROBOT_X_OFFSET
 dual_mod.HOME_QPOS = HOME_QPOS
 
+obstacle_x = tiny_range(OBSTACLE_CENTER[0], half_width=0.03)
+obstacle_y = tiny_range(OBSTACLE_CENTER[1], half_width=0.03)
+obstacle_region_str = f"""
+      (obstacle_region
+          (:target main_table)
+          (:ranges (({obstacle_x[0]} {obstacle_y[0]} {obstacle_x[1]} {obstacle_y[1]})))
+          (:yaw_rotation ((0.0 0.0)))
+      )""" if ENABLE_OBSTACLE else ""
+obstacle_objects_str = "  wine_bottle_obstacle_1 - wine_bottle_obstacle" if ENABLE_OBSTACLE else ""
+obstacle_init_str = "    (On wine_bottle_obstacle_1 main_table_obstacle_region)" if ENABLE_OBSTACLE else ""
+
 problem_name = "LIBERO_Dual_Tabletop_Manipulation"
 bddl_content = f"""(define (problem {problem_name})
   (:domain robosuite)
@@ -204,16 +228,19 @@ bddl_content = f"""(define (problem {problem_name})
       )
       (contain_region
           (:target trash_can_1)
-      )
+      ){obstacle_region_str}
   )
   (:fixtures main_table - table)
-  (:objects milk_1 milk_2 - milk  trash_can_1 trash_can_2 - trash_can)
+  (:objects milk_1 milk_2 - milk  trash_can_1 trash_can_2 - trash_can
+{obstacle_objects_str}
+  )
   (:obj_of_interest milk_1 trash_can_1)
   (:init
     (On milk_1 main_table_milk_region)
     (On milk_2 main_table_milk_region_2)
     (On trash_can_1 main_table_trash_can_region)
     (On trash_can_2 main_table_trash_can_region_2)
+{obstacle_init_str}
   )
   (:goal
     (And (In milk_1 trash_can_1_contain_region))
@@ -269,6 +296,13 @@ obs = env.reset()
 env.env.sim.model.cam_pos[birdview_cam_id][:] = BIRDVIEW_CAM_POS
 env.env.sim.forward()
 
+# 디버그: 씬에 들어간 모든 객체 위치 출력
+print("=== Scene objects ===")
+for obj_name in obs:
+    if obj_name.endswith("_pos"):
+        print(f"  {obj_name}: {np.asarray(obs[obj_name]).round(3).tolist()}")
+print("=====================")
+
 
 def set_free_joint_xy(sim, joint_name, x, y):
     joint_id = sim.model.joint_name2id(joint_name)
@@ -292,7 +326,7 @@ def lock_robot1_pose(sim, robot):
 
 set_free_joint_xy(env.env.sim, "trash_can_1_joint0", TRASH_CAN_CENTER[0], TRASH_CAN_CENTER[1])
 set_free_joint_xy(env.env.sim, "trash_can_2_joint0", trash_can_center_2[0], trash_can_center_2[1])
-lock_robot1_pose(env.env.sim, env.env.robots[1])
+# bimanual 모드에서는 robot1 lock 안 함 (각자 trajectory 따라감)
 env.env.sim.forward()
 BIRDVIEW_WORLD_TO_CAMERA = get_camera_transform_matrix(
     sim=env.env.sim,
@@ -539,8 +573,10 @@ def clamp_norm(vec, max_norm):
     return vec * (max_norm / norm)
 
 
-def make_dual_action(robot0_action):
-    return list(robot0_action) + list(ROBOT1_PASSIVE_QPOS) + [ROBOT1_PASSIVE_GRIPPER_ACTION]
+def make_dual_action(robot0_action, robot1_action=None):
+    if robot1_action is None:
+        return list(robot0_action) + list(ROBOT1_PASSIVE_QPOS) + [ROBOT1_PASSIVE_GRIPPER_ACTION]
+    return list(robot0_action) + list(robot1_action)
 
 
 def solve_ik_for_pose(sim, robot, target_xyz, target_ori_mat, initial_qpos):
@@ -701,13 +737,17 @@ frames = []
 actions = []
 
 milk_pos = np.asarray(obs["milk_1_pos"], dtype=float)
-milk_pick_xyz = milk_pos + np.array([0.0, 0.0, 0.02])
+milk_pick_xyz = milk_pos + np.array([0.0, 0.0, -0.015])
 milk_above_xyz = milk_pos + np.array([0.0, 0.0, PREGRASP_Z_OFFSET])
 postgrasp_lift_xyz = milk_pos + np.array([0.0, 0.0, POSTGRASP_LIFT_Z_OFFSET])
+# transit z: lift/preplace는 낮게 → obstacle과 충돌 유도
+transit_z = milk_pos[2] + TRANSIT_Z_OFFSET
+milk_transit_xyz = np.array([milk_pos[0], milk_pos[1], transit_z])
 trash_target_xyz = np.asarray(
     env.env.sim.data.get_site_xpos("trash_can_1_contain_region"),
     dtype=float,
 )
+trash_transit_xyz = np.array([trash_target_xyz[0], trash_target_xyz[1], transit_z])
 trash_above_xyz = trash_target_xyz + np.array([0.0, 0.0, PREPLACE_Z_OFFSET])
 retreat_xyz = trash_target_xyz + np.array([0.0, 0.0, RETREAT_Z_OFFSET])
 WAYPOINT_XYZS = {
@@ -720,11 +760,76 @@ WAYPOINT_XYZS = {
 robot0 = env.env.robots[0]
 home_qpos = np.asarray(obs["robot0_joint_pos"], dtype=float)
 target_ori_mat = make_target_ori_from_axes(TARGET_DOWN_AXIS_WORLD, TARGET_FORWARD_AXIS_WORLD)
+
+# ============================================================================
+# Robot1 bimanual trajectory: milk_2 잡아서 trash_can_1으로 옮기기 (robot0과 동시)
+# ============================================================================
+robot1 = env.env.robots[1]
+# robot1을 시작부터 팔 접힌 자세로 retract (default home은 robot0 ee와 거의 닿음 → 픽업 불가)
+ROBOT1_INITIAL_RETRACTED = np.array([0.0, -1.3, 0.0, -2.35, 0.0, 1.0, 0.785])
+env.env.sim.data.qpos[robot1._ref_joint_pos_indexes] = ROBOT1_INITIAL_RETRACTED
+if robot1.has_gripper:
+    env.env.sim.data.qpos[robot1._ref_gripper_joint_pos_indexes] = np.array([0.020833, -0.020833])
+env.env.sim.forward()
+obs = env.env._get_observations()
+milk_2_pos = np.asarray(obs["milk_2_pos"], dtype=float)
+r1_home_qpos = ROBOT1_INITIAL_RETRACTED.copy()
+r1_pregrasp_xyz = milk_2_pos + np.array([0.0, 0.0, PREGRASP_Z_OFFSET])
+r1_grasp_xyz = milk_2_pos + np.array([0.0, 0.0, 0.005])
+r1_postlift_xyz = milk_2_pos + np.array([0.0, 0.0, POSTGRASP_LIFT_Z_OFFSET])
+r1_transit_xyz = np.array([milk_2_pos[0], milk_2_pos[1], transit_z])
+r1_mid_xyz = np.array([(milk_2_pos[0]+trash_target_xyz[0])/2, (milk_2_pos[1]+trash_target_xyz[1])/2, transit_z])
+r1_pretrash_xyz = np.array([trash_target_xyz[0], trash_target_xyz[1], transit_z])
+r1_preplace_xyz = trash_above_xyz
+r1_place_xyz = trash_target_xyz
+
+r1_pregrasp_qpos = solve_ik_for_pose(env.env.sim, robot1, r1_pregrasp_xyz, target_ori_mat, r1_home_qpos)
+r1_grasp_qpos = solve_ik_for_pose(env.env.sim, robot1, r1_grasp_xyz, target_ori_mat, r1_pregrasp_qpos)
+r1_postlift_qpos = solve_ik_for_pose(env.env.sim, robot1, r1_postlift_xyz, target_ori_mat, r1_grasp_qpos)
+r1_transit_qpos = solve_ik_for_pose(env.env.sim, robot1, r1_transit_xyz, target_ori_mat, r1_postlift_qpos)
+r1_mid_qpos = solve_ik_for_pose(env.env.sim, robot1, r1_mid_xyz, target_ori_mat, r1_transit_qpos)
+r1_pretrash_qpos = solve_ik_for_pose(env.env.sim, robot1, r1_pretrash_xyz, target_ori_mat, r1_mid_qpos)
+r1_preplace_qpos = solve_ik_for_pose(env.env.sim, robot1, r1_preplace_xyz, target_ori_mat, r1_pretrash_qpos)
+r1_place_qpos = solve_ik_for_pose(env.env.sim, robot1, r1_place_xyz, target_ori_mat, r1_preplace_qpos)
+
+# 시간 기반 keyframes: (step_idx, qpos, gripper_cmd)
+R1_KEYFRAMES = [
+    (0,   r1_home_qpos,     GRIPPER_OPEN),
+    (35,  r1_pregrasp_qpos, GRIPPER_OPEN),
+    (60,  r1_grasp_qpos,    GRIPPER_OPEN),
+    (75,  r1_grasp_qpos,    GRIPPER_CLOSE),
+    (95,  r1_postlift_qpos, GRIPPER_CLOSE),
+    (110, r1_transit_qpos,  GRIPPER_CLOSE),
+    (130, r1_mid_qpos,      GRIPPER_CLOSE),     # 중앙 통과 — 충돌 시점
+    (150, r1_pretrash_qpos, GRIPPER_CLOSE),
+    (170, r1_preplace_qpos, GRIPPER_CLOSE),
+    (185, r1_place_qpos,    GRIPPER_CLOSE),
+    (200, r1_place_qpos,    GRIPPER_OPEN),
+]
+
+def get_r1_target(step_t):
+    """현재 step에서 robot1 target qpos + gripper 보간 결과."""
+    if step_t <= R1_KEYFRAMES[0][0]:
+        return np.asarray(R1_KEYFRAMES[0][1]), R1_KEYFRAMES[0][2]
+    if step_t >= R1_KEYFRAMES[-1][0]:
+        return np.asarray(R1_KEYFRAMES[-1][1]), R1_KEYFRAMES[-1][2]
+    for i in range(1, len(R1_KEYFRAMES)):
+        prev_t, prev_q, prev_g = R1_KEYFRAMES[i-1]
+        cur_t, cur_q, cur_g = R1_KEYFRAMES[i]
+        if step_t <= cur_t:
+            alpha = (step_t - prev_t) / max(cur_t - prev_t, 1)
+            interp_q = (1.0 - alpha) * np.asarray(prev_q) + alpha * np.asarray(cur_q)
+            return interp_q, cur_g
+    return np.asarray(R1_KEYFRAMES[-1][1]), R1_KEYFRAMES[-1][2]
+
+print(f"=== Robot1 bimanual trajectory built (target: milk_2 → trash_can_1) ===")
 pregrasp_qpos = solve_ik_for_pose(env.env.sim, robot0, milk_above_xyz, target_ori_mat, home_qpos)
 grasp_qpos = solve_ik_for_pose(env.env.sim, robot0, milk_pick_xyz, target_ori_mat, pregrasp_qpos)
 postgrasp_lift_qpos = solve_ik_for_pose(env.env.sim, robot0, postgrasp_lift_xyz, target_ori_mat, grasp_qpos)
-lift_qpos = solve_ik_for_pose(env.env.sim, robot0, milk_above_xyz, target_ori_mat, postgrasp_lift_qpos)
-preplace_qpos = solve_ik_for_pose(env.env.sim, robot0, trash_above_xyz, target_ori_mat, lift_qpos)
+lift_qpos = solve_ik_for_pose(env.env.sim, robot0, milk_transit_xyz, target_ori_mat, postgrasp_lift_qpos)
+mid_transit_qpos = solve_ik_for_pose(env.env.sim, robot0, np.array([(milk_pos[0]+trash_target_xyz[0])/2, (milk_pos[1]+trash_target_xyz[1])/2, transit_z]), target_ori_mat, lift_qpos)
+preplace_transit_qpos = solve_ik_for_pose(env.env.sim, robot0, trash_transit_xyz, target_ori_mat, mid_transit_qpos)
+preplace_qpos = solve_ik_for_pose(env.env.sim, robot0, trash_above_xyz, target_ori_mat, preplace_transit_qpos)
 place_qpos = solve_ik_for_pose(env.env.sim, robot0, trash_target_xyz, target_ori_mat, preplace_qpos)
 retreat_qpos = solve_ik_for_pose(env.env.sim, robot0, retreat_xyz, target_ori_mat, place_qpos)
 
@@ -770,7 +875,9 @@ post_grasp_sequence = [
     ("back_to_pregrasp",     postgrasp_lift_qpos, GRIPPER_CLOSE),
     ("lift_milk_mid", interpolate_joint_waypoint(postgrasp_lift_qpos, lift_qpos), GRIPPER_CLOSE),
     ("lift_milk", lift_qpos, GRIPPER_CLOSE),
-    ("move_preplace_mid", interpolate_joint_waypoint(lift_qpos, preplace_qpos), GRIPPER_CLOSE),
+    ("transit_mid", mid_transit_qpos, GRIPPER_CLOSE),
+    ("transit_to_trash", preplace_transit_qpos, GRIPPER_CLOSE),
+    ("move_preplace_mid", interpolate_joint_waypoint(preplace_transit_qpos, preplace_qpos), GRIPPER_CLOSE),
     ("move_preplace", preplace_qpos, GRIPPER_CLOSE),
     ("move_place_mid", interpolate_joint_waypoint(preplace_qpos, place_qpos), GRIPPER_CLOSE),
     ("move_place", place_qpos, GRIPPER_CLOSE),
@@ -788,6 +895,13 @@ done = False
 move_index = 0
 post_grasp_index = 0
 retreat_index = 0
+
+# Stuck 감지: 충돌 후 robot이 같은 jd로 멈춰 있으면 N step 더 돌리고 자동 종료 (영상 길이 단축)
+last_jd = -1.0
+stuck_count = 0
+post_stuck_count = 0
+STUCK_THRESHOLD = 25       # 연속 N step jd 변화 < 0.003이면 stuck으로 판정
+POST_STUCK_FRAMES = 30     # stuck 후 추가로 보여줄 frame 수 (병 토플 물리 보여주기)
 
 for _ in range(MAX_STEPS):
     cur = obs["robot0_joint_pos"]
@@ -847,7 +961,12 @@ for _ in range(MAX_STEPS):
                 phase = retreat_sequence[retreat_index][0]
             phase_steps = 0
 
-    action = make_dual_action(robot0_action)
+    # Robot1 bimanual action: 사전계산된 keyframe trajectory 따라가기
+    r1_target_qpos, r1_gripper = get_r1_target(len(actions))
+    r1_cur = env.env.sim.data.qpos[robot1._ref_joint_pos_indexes].copy()
+    robot1_action = make_joint_position_action(r1_target_qpos, r1_cur, gripper_cmd=r1_gripper)
+
+    action = make_dual_action(robot0_action, robot1_action)
     actions.append(action)
     obs, _, env_done, _ = env.step(action)
     # 매 step마다 phase + joint 거리 + 실제 eef z축 출력
@@ -858,8 +977,29 @@ for _ in range(MAX_STEPS):
         _jd = joint_distance_to(obs, _tgt)
     else:
         _jd = -1.0
-    print(f"step={len(actions):3d} phase={phase:22s} jd={_jd:.3f} eef_z={eef_ori[:,2].round(2).tolist()}")
-    lock_robot1_pose(env.env.sim, env.env.robots[1])
+    obs_for_log = env.env._get_observations()
+    bottle_pos = obs_for_log.get("wine_bottle_obstacle_1_pos", [0,0,0])
+    ee_xyz = np.asarray(env.env.sim.data.get_site_xpos(robot0.gripper.important_sites["grip_site"]), dtype=float)
+    print(f"step={len(actions):3d} phase={phase:22s} jd={_jd:.3f} ee={ee_xyz.round(3).tolist()} bottle={np.asarray(bottle_pos).round(3).tolist()}")
+
+    # Stuck 감지: transit 또는 preplace 단계에서만 (grasp 단계는 정상 settling 일어남)
+    in_transit_phase = phase in ("transit_mid", "transit_to_trash", "move_preplace_mid", "move_preplace")
+    if in_transit_phase and _jd > 0:
+        if last_jd > 0 and abs(_jd - last_jd) < 0.01:
+            stuck_count += 1
+        else:
+            stuck_count = 0
+        last_jd = _jd
+    else:
+        stuck_count = 0
+        last_jd = _jd if _jd > 0 else last_jd
+    if stuck_count >= STUCK_THRESHOLD:
+        post_stuck_count += 1
+        if post_stuck_count >= POST_STUCK_FRAMES:
+            print(f"  [stuck detected → terminating after {POST_STUCK_FRAMES} extra frames]")
+            done = True
+
+    # bimanual 모드: robot1 lock 안 함
     obs = env.env._get_observations()
     frames.append(
         make_grid(
