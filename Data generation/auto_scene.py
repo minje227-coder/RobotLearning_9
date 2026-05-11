@@ -233,6 +233,10 @@ CAMERAS = [
     "birdview",
     "frontview",
     "sideview",
+    "sideview_robot0_left",
+    "sideview_robot0_right",
+    "sideview_robot1_left",
+    "sideview_robot1_right",
     "robot0_eye_in_hand",
     "backview",
 ]
@@ -241,6 +245,10 @@ LABELS = [
     "Bird View",
     "Front View",
     "Side View",
+    "Side R0 Left",
+    "Side R0 Right",
+    "Side R1 Left",
+    "Side R1 Right",
     "Hand Cam",
     "Back View",
 ]
@@ -704,8 +712,18 @@ def make_grid(obs_dict, waypoint_xyzs, ik_reference_points, ik_reference_pose):
             img = draw_orientation_axes_on_camera(img, cam, ik_reference_pose[0], ik_reference_pose[1])
             img = draw_waypoints_on_camera(img, cam, waypoint_xyzs)
         views.append(add_label(img, label))
-    row1 = np.concatenate(views[:3], axis=1)
-    row2 = np.concatenate(views[3:], axis=1)
+    # Build a 2-row grid with dynamic column count.
+    num_views = len(views)
+    if num_views == 0:
+        raise ValueError("No camera views available for grid rendering.")
+    cols = (num_views + 1) // 2
+    row1_views = views[:cols]
+    row2_views = views[cols:]
+    if len(row2_views) < cols:
+        pad_img = np.zeros_like(views[0])
+        row2_views.extend([pad_img] * (cols - len(row2_views)))
+    row1 = np.concatenate(row1_views, axis=1)
+    row2 = np.concatenate(row2_views, axis=1)
     return np.concatenate([row1, row2], axis=0)
 
 

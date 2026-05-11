@@ -99,8 +99,8 @@ JOINT_POS_DAMPING_RATIO = 1.5
 JOINT_POS_RAMP_RATIO = 0.05
 BIRDVIEW_CAM_POS = [0.0, 0.0, 2.5]
 
-DATASET_CAMERAS = ["sideview", "robot1_eye_in_hand"]
-DEBUG_CAMERAS = ["birdview", "backview"]
+DATASET_CAMERAS = ["sideview_robot1_left", "robot1_eye_in_hand", "sideview_robot1_right"]
+DEBUG_CAMERAS = []
 
 TRASH_XML_PATH = pathlib.Path(
     os.path.expanduser(
@@ -449,8 +449,9 @@ def preprocess_image(img, rotation):
 
 
 def make_frame(env, obs, robot1_action, image_rotation):
-    side_img = preprocess_image(obs["sideview_image"], image_rotation)
+    side_left_img = preprocess_image(obs["sideview_robot1_left_image"], image_rotation)
     wrist_img = preprocess_image(obs["robot1_eye_in_hand_image"], image_rotation)
+    side_right_img = preprocess_image(obs["sideview_robot1_right_image"], image_rotation)
     state = extract_state(env)
     action = np.asarray(robot1_action, dtype=np.float32)
     if state.shape != (8,):
@@ -458,8 +459,9 @@ def make_frame(env, obs, robot1_action, image_rotation):
     if action.shape != (8,):
         raise ValueError(f"Expected action shape (8,), got {action.shape}")
     return {
-        "observation.images.side": side_img,
+        "observation.images.side_left": side_left_img,
         "observation.images.wrist": wrist_img,
+        "observation.images.side_right": side_right_img,
         "observation.state": state,
         "action": action,
         "task": TASK_DESCRIPTION,
@@ -468,13 +470,10 @@ def make_frame(env, obs, robot1_action, image_rotation):
 
 def make_debug_frame(obs, image_rotation):
     images = [
-        preprocess_image(obs["sideview_image"], image_rotation),
+        preprocess_image(obs["sideview_robot1_left_image"], image_rotation),
         preprocess_image(obs["robot1_eye_in_hand_image"], image_rotation),
+        preprocess_image(obs["sideview_robot1_right_image"], image_rotation),
     ]
-    if "birdview_image" in obs:
-        images.append(preprocess_image(obs["birdview_image"], image_rotation))
-    if "backview_image" in obs:
-        images.append(preprocess_image(obs["backview_image"], image_rotation))
     return np.concatenate(images, axis=1)
 
 
@@ -518,7 +517,7 @@ def run_scripted_episode(env, obs, max_steps, image_rotation, save_debug_video):
     env.env.sim.forward()
     obs = env.env._get_observations()
 
-    for key in ["sideview_image", "robot1_eye_in_hand_image"]:
+    for key in ["sideview_robot1_left_image", "robot1_eye_in_hand_image", "sideview_robot1_right_image"]:
         if key not in obs:
             raise KeyError(f"Missing expected observation key: {key}. Available: {list(obs)}")
 
@@ -633,14 +632,16 @@ def run_scripted_episode(env, obs, max_steps, image_rotation, save_debug_video):
 
 
 def save_raw_episode(path: pathlib.Path, frames: list[dict]) -> None:
-    side = np.stack([frame["observation.images.side"] for frame in frames]).astype(np.uint8)
+    side_left = np.stack([frame["observation.images.side_left"] for frame in frames]).astype(np.uint8)
     wrist = np.stack([frame["observation.images.wrist"] for frame in frames]).astype(np.uint8)
+    side_right = np.stack([frame["observation.images.side_right"] for frame in frames]).astype(np.uint8)
     state = np.stack([frame["observation.state"] for frame in frames]).astype(np.float32)
     action = np.stack([frame["action"] for frame in frames]).astype(np.float32)
     np.savez_compressed(
         path,
-        side=side,
+        side_left=side_left,
         wrist=wrist,
+        side_right=side_right,
         state=state,
         action=action,
         task=np.array(TASK_DESCRIPTION),
@@ -794,12 +795,17 @@ def create_dataset(args):
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     features = {
-        "observation.images.side": {
+        "observation.images.side_left": {
             "dtype": "image",
             "shape": (args.resolution, args.resolution, 3),
             "names": ["height", "width", "channel"],
         },
         "observation.images.wrist": {
+            "dtype": "image",
+            "shape": (args.resolution, args.resolution, 3),
+            "names": ["height", "width", "channel"],
+        },
+        "observation.images.side_right": {
             "dtype": "image",
             "shape": (args.resolution, args.resolution, 3),
             "names": ["height", "width", "channel"],

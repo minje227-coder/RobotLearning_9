@@ -50,27 +50,39 @@ def parse_args():
 
 def load_raw_episode(path: pathlib.Path):
     data = np.load(path)
-    required = ["side", "wrist", "state", "action", "task"]
+    required = ["side_left", "wrist", "side_right", "state", "action", "task"]
     missing = [key for key in required if key not in data.files]
     if missing:
         raise KeyError(f"{path} missing keys: {missing}")
 
-    side = data["side"]
+    side_left = data["side_left"]
     wrist = data["wrist"]
+    side_right = data["side_right"]
     state = data["state"]
     action = data["action"]
     task = str(data["task"].item())
 
-    if side.ndim != 4 or side.shape[-1] != 3:
-        raise ValueError(f"{path} side shape must be [T,H,W,3], got {side.shape}")
-    if wrist.shape != side.shape:
-        raise ValueError(f"{path} wrist shape {wrist.shape} does not match side {side.shape}")
-    if state.shape != (side.shape[0], 8):
+    if side_left.ndim != 4 or side_left.shape[-1] != 3:
+        raise ValueError(f"{path} side_left shape must be [T,H,W,3], got {side_left.shape}")
+    if wrist.shape != side_left.shape:
+        raise ValueError(f"{path} wrist shape {wrist.shape} does not match side_left {side_left.shape}")
+    if side_right.shape != side_left.shape:
+        raise ValueError(
+            f"{path} side_right shape {side_right.shape} does not match side_left {side_left.shape}"
+        )
+    if state.shape != (side_left.shape[0], 8):
         raise ValueError(f"{path} state shape must be [T,8], got {state.shape}")
-    if action.shape != (side.shape[0], 8):
+    if action.shape != (side_left.shape[0], 8):
         raise ValueError(f"{path} action shape must be [T,8], got {action.shape}")
 
-    return side, wrist, state.astype(np.float32), action.astype(np.float32), task
+    return (
+        side_left,
+        wrist,
+        side_right,
+        state.astype(np.float32),
+        action.astype(np.float32),
+        task,
+    )
 
 
 def create_dataset(args):
@@ -86,12 +98,17 @@ def create_dataset(args):
         shutil.rmtree(args.output_dir)
 
     features = {
-        "observation.images.side": {
+        "observation.images.side_left": {
             "dtype": "video",
             "shape": (args.resolution, args.resolution, 3),
             "names": ["height", "width", "channels"],
         },
         "observation.images.wrist": {
+            "dtype": "video",
+            "shape": (args.resolution, args.resolution, 3),
+            "names": ["height", "width", "channels"],
+        },
+        "observation.images.side_right": {
             "dtype": "video",
             "shape": (args.resolution, args.resolution, 3),
             "names": ["height", "width", "channels"],
@@ -123,14 +140,15 @@ def create_dataset(args):
     saved = 0
     try:
         for episode_path in episode_paths:
-            side, wrist, state, action, task = load_raw_episode(episode_path)
+            side_left, wrist, side_right, state, action, task = load_raw_episode(episode_path)
             if args.task_description is not None:
                 task = args.task_description
-            for idx in range(side.shape[0]):
+            for idx in range(side_left.shape[0]):
                 dataset.add_frame(
                     {
-                        "observation.images.side": side[idx],
+                        "observation.images.side_left": side_left[idx],
                         "observation.images.wrist": wrist[idx],
+                        "observation.images.side_right": side_right[idx],
                         "observation.state": state[idx],
                         "action": action[idx],
                         "task": task,
