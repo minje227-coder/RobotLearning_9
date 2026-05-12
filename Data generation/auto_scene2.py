@@ -718,7 +718,7 @@ frames = []
 actions = []
 
 milk_pos = np.asarray(obs["salad_dressing_1_pos"], dtype=float)
-milk_pick_xyz = milk_pos + np.array([0.0, 0.0, GRASP_Z_OFFSET])
+milk_pick_xyz = milk_pos + np.array([0.0, 0.0, GRASP_Z_OFFSET + 0.02])
 milk_above_xyz = milk_pos + np.array([0.0, 0.0, PREGRASP_Z_OFFSET])
 postgrasp_lift_xyz = milk_pos + np.array([0.0, 0.0, POSTGRASP_LIFT_Z_OFFSET])
 trash_target_xyz = np.asarray(
