@@ -26,9 +26,7 @@ from robosuite.utils.camera_utils import (
 # ==============================================================================
 ROBOT_X_OFFSET = 0.48
 HOME_QPOS = [0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785]
-ROBOT1_PASSIVE_QPOS = [0.0, -1.3, 0.0, -2.35, 0.0, 1.0, 0.785]
-ROBOT1_PASSIVE_GRIPPER = [0.020833, -0.020833]
-ROBOT1_PASSIVE_GRIPPER_ACTION = -1.0   # robot1 gripper 열어둠 (반전 적용)
+ROBOT1_FIXED_ACTION = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0]
 
 # gripper 액션 부호 (robosuite Panda 관례 반대로 들어가서 여기서 한 번에 정의)
 GRIPPER_OPEN  = -1.0   # gripper 열기 (approach / release 때)
@@ -291,19 +289,7 @@ def set_free_joint_xy(sim, joint_name, x, y):
     sim.data.set_joint_qpos(joint_name, qpos)
 
 
-def lock_robot1_pose(sim, robot):
-    sim.data.qpos[robot._ref_joint_pos_indexes] = np.asarray(ROBOT1_PASSIVE_QPOS, dtype=float)
-    sim.data.qvel[robot._ref_joint_vel_indexes] = 0.0
-    if robot.has_gripper:
-        sim.data.qpos[robot._ref_gripper_joint_pos_indexes] = np.asarray(
-            ROBOT1_PASSIVE_GRIPPER, dtype=float
-        )
-        sim.data.qvel[robot._ref_gripper_joint_vel_indexes] = 0.0
-    sim.forward()
-
-
 set_free_joint_xy(env.env.sim, "trash_can_1_joint0", TRASH_CAN_CENTER[0], TRASH_CAN_CENTER[1])
-lock_robot1_pose(env.env.sim, env.env.robots[1])
 env.env.sim.forward()
 BIRDVIEW_WORLD_TO_CAMERA = get_camera_transform_matrix(
     sim=env.env.sim,
@@ -560,7 +546,7 @@ def clamp_norm(vec, max_norm):
 
 
 def make_dual_action(robot0_action):
-    return list(robot0_action) + list(ROBOT1_PASSIVE_QPOS) + [ROBOT1_PASSIVE_GRIPPER_ACTION]
+    return list(robot0_action) + list(ROBOT1_FIXED_ACTION)
 
 
 def solve_ik_for_pose(sim, robot, target_xyz, target_ori_mat, initial_qpos):
@@ -902,7 +888,6 @@ for _ in range(MAX_STEPS):
     action = make_dual_action(robot0_action)
     actions.append(action)
     obs, _, env_done, _ = env.step(action)
-    lock_robot1_pose(env.env.sim, env.env.robots[1])
     obs = env.env._get_observations()
     frames.append(
         make_grid(
