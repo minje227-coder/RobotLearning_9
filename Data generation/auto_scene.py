@@ -212,7 +212,7 @@ bddl_content = f"""(define (problem {problem_name})
       )
   )
   (:fixtures main_table - table)
-  (:objects milk_1 orange_juice_1 - orange_juice  trash_can_1 - trash_can)
+  (:objects milk_1 - milk  orange_juice_1 - orange_juice  trash_can_1 - trash_can)
   (:obj_of_interest milk_1 trash_can_1)
   (:init
     (On milk_1 main_table_milk_region)

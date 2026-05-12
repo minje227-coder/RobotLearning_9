@@ -53,7 +53,7 @@ DISTRACTOR_MILK_RADIUS = MILK_RADIUS
 
 TRASH_CAN_CENTER = (0.00, 0.35)
 TARGET_CENTER_LOCAL = (0.00, 0.00)
-TARGET_RADIUS_LOCAL = 0.12
+TARGET_RADIUS_LOCAL = 0.07
 TARGET_BOX_HALF_SIZE = 0.03
 
 TRASH_INNER_WIDTH = 0.3
@@ -251,7 +251,7 @@ def build_episode_spec(seed: int) -> EpisodeSpec:
       )
   )
   (:fixtures main_table - table)
-  (:objects milk_1 orange_juice_1 - orange_juice  trash_can_1 - trash_can)
+  (:objects milk_1 - milk  orange_juice_1 - orange_juice  trash_can_1 - trash_can)
   (:obj_of_interest orange_juice_1 trash_can_1)
   (:init
     (On milk_1 main_table_milk_region)
