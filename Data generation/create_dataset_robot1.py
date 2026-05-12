@@ -104,9 +104,7 @@ DATASET_CAMERAS = ["sideview_robot1_left", "robot1_eye_in_hand", "sideview_robot
 DEBUG_CAMERAS = []
 
 TRASH_XML_PATH = pathlib.Path(
-    os.path.expanduser(
-        "~/RobotLearning_9/vlsa-aegis/safelibero/libero/libero/assets/stable_scanned_objects/trash_can/trash_can.xml"
-    )
+    BASE_DIR / "vlsa-aegis/safelibero/libero/libero/assets/stable_scanned_objects/trash_can/trash_can.xml"
 )
 
 

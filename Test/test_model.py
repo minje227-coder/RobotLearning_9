@@ -67,6 +67,7 @@ def parse_args():
     parser.add_argument("--max-steps", type=int, default=400)
     parser.add_argument("--resolution", type=int, default=RESOLUTION_DEFAULT)
     parser.add_argument("--fps", type=int, default=FPS_DEFAULT)
+    parser.add_argument("--vcodec", default="libx264")
     parser.add_argument("--camera", choices=DATASET_CAMERAS, default="sideview")
     return parser.parse_args()
 
@@ -375,7 +376,7 @@ def replay_episode(args) -> None:
                 print(f"[info] env_done=True at step {step}; continuing replay actions.")
 
         args.video_out.parent.mkdir(parents=True, exist_ok=True)
-        imageio.mimwrite(args.video_out, frames, fps=args.fps)
+        imageio.mimwrite(args.video_out, frames, fps=args.fps, codec=args.vcodec)
         print(f"Saved: {args.video_out}")
         print(f"robot0_policy_root={policy0_root}")
         print(f"robot1_policy_root={policy1_root}")
