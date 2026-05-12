@@ -182,7 +182,7 @@ TRASH_XML_PATH.write_text(
 )
 
 # ==============================================================================
-# dual problem 설정: robot1가 milk_2를 target으로 사용, robot0 / milk_1은 잉여
+# dual problem 설정: robot1가 salad_dressing_1를 target으로 사용, robot0 / milk_1은 잉여
 # ==============================================================================
 dual_mod.ROBOT_X_OFFSET = ROBOT_X_OFFSET
 dual_mod.HOME_QPOS = HOME_QPOS
@@ -190,7 +190,7 @@ dual_mod.HOME_QPOS = HOME_QPOS
 problem_name = "LIBERO_Dual_Tabletop_Manipulation"
 bddl_content = f"""(define (problem {problem_name})
   (:domain robosuite)
-  (:language put the distractor milk into the target area inside the trash can)
+  (:language put the distractor salad dressing into the target area inside the trash can)
   (:regions
       (milk_region
           (:target main_table)
@@ -212,15 +212,15 @@ bddl_content = f"""(define (problem {problem_name})
       )
   )
   (:fixtures main_table - table)
-  (:objects milk_1 milk_2 - milk  trash_can_1 - trash_can)
-  (:obj_of_interest milk_2 trash_can_1)
+  (:objects milk_1 - milk  salad_dressing_1 - salad_dressing  trash_can_1 - trash_can)
+  (:obj_of_interest salad_dressing_1 trash_can_1)
   (:init
     (On milk_1 main_table_milk_region)
-    (On milk_2 main_table_milk_region_2)
+    (On salad_dressing_1 main_table_milk_region_2)
     (On trash_can_1 main_table_trash_can_region)
   )
   (:goal
-    (And (In milk_2 trash_can_1_contain_region))
+    (And (In salad_dressing_1 trash_can_1_contain_region))
   )
 )"""
 tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".bddl", delete=False)
@@ -399,7 +399,7 @@ def draw_birdview_regions(img):
     out = img.copy()
     # milk_1 sampling disk (green)
     cv2.polylines(out, [project_circle_to_birdview(MILK_CENTER, MILK_RADIUS)], True, (80, 220, 80), 2)
-    # milk_2 (distractor) sampling disk (yellow-green, dashed-style 다른 색)
+    # salad_dressing_1 (distractor) sampling disk (yellow-green, dashed-style 다른 색)
     cv2.polylines(
         out,
         [project_circle_to_birdview(DISTRACTOR_MILK_CENTER, DISTRACTOR_MILK_RADIUS)],
@@ -717,7 +717,7 @@ def make_grid(obs_dict, waypoint_xyzs, ik_reference_points, ik_reference_pose):
 frames = []
 actions = []
 
-milk_pos = np.asarray(obs["milk_2_pos"], dtype=float)
+milk_pos = np.asarray(obs["salad_dressing_1_pos"], dtype=float)
 milk_pick_xyz = milk_pos + np.array([0.0, 0.0, GRASP_Z_OFFSET])
 milk_above_xyz = milk_pos + np.array([0.0, 0.0, PREGRASP_Z_OFFSET])
 postgrasp_lift_xyz = milk_pos + np.array([0.0, 0.0, POSTGRASP_LIFT_Z_OFFSET])
