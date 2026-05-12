@@ -14,8 +14,9 @@ import sys
 import tempfile
 from dataclasses import dataclass
 
-sys.path.insert(0, os.path.expanduser("~/lerobot/src"))
-sys.path.insert(0, os.path.expanduser("~/RobotLearning_9/vlsa-aegis/safelibero"))
+BASE_DIR = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(BASE_DIR / "Train/lerobot/src"))
+sys.path.insert(0, str(BASE_DIR / "vlsa-aegis/safelibero"))
 
 import imageio
 import numpy as np

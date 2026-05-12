@@ -14,17 +14,25 @@ import torch
 
 import sys
 
-sys.path.insert(0, os.path.expanduser("~/RobotLearning_9/Train/lerobot/src"))
-sys.path.insert(0, os.path.expanduser("~/RobotLearning_9/Data generation"))
+BASE_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(BASE_DIR / "Train/lerobot/src"))
+sys.path.insert(0, str(BASE_DIR / "Data generation"))
 
 from lerobot.policies.factory import get_policy_class, make_pre_post_processors
 from lerobot.policies.utils import prepare_observation_for_inference
 
 
-DEFAULT_POLICY_PATH = Path("/home/minje/RobotLearning_9/outputs/my_smolvla/checkpoints/100000/pretrained_model")
+DEFAULT_POLICY_PATH = BASE_DIR / "outputs/my_smolvla/checkpoints/100000/pretrained_model"
 DATASET_CAMERAS = ["all", "sideview", "robot0_eye_in_hand", "robot1_eye_in_hand", "frontview", "agentview", "birdview", "backview"]
-POLICY_CAMERAS = ["sideview", "robot0_eye_in_hand", "robot1_eye_in_hand"]
-RENDER_CAMERAS = ["frontview", "sideview", "agentview", "birdview", "backview", "robot0_eye_in_hand", "robot1_eye_in_hand"]
+POLICY_CAMERAS = [
+    "sideview_robot0_left",
+    "robot0_eye_in_hand",
+    "sideview_robot0_right",
+    "sideview_robot1_left",
+    "robot1_eye_in_hand",
+    "sideview_robot1_right",
+]
+RENDER_CAMERAS = ["sideview", "birdview", "backview"]
 FIXED_ACTION = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0], dtype=np.float32)
 FPS_DEFAULT = 10
 RESOLUTION_DEFAULT = 256
@@ -171,24 +179,34 @@ def build_policy_observation(
             img = img[::-1]
         return np.ascontiguousarray(img).astype(np.uint8)
 
-    side = preprocess_image(env_obs["sideview_image"])
-    self_wrist_key = f"robot{robot_idx}_eye_in_hand_image"
-    if self_wrist_key not in env_obs:
-        self_wrist_key = "robot0_eye_in_hand_image"
-    wrist_self = preprocess_image(env_obs[self_wrist_key])
+    side_left_key = f"sideview_robot{robot_idx}_left_image"
+    wrist_key = f"robot{robot_idx}_eye_in_hand_image"
+    side_right_key = f"sideview_robot{robot_idx}_right_image"
+
+    if side_left_key not in env_obs:
+        side_left_key = "sideview_robot0_left_image"
+    if wrist_key not in env_obs:
+        wrist_key = "robot0_eye_in_hand_image"
+    if side_right_key not in env_obs:
+        side_right_key = "sideview_robot0_right_image"
+
+    side_left = preprocess_image(env_obs[side_left_key])
+    wrist = preprocess_image(env_obs[wrist_key])
+    side_right = preprocess_image(env_obs[side_right_key])
 
     obs = {
         "observation.state": extract_state(env_obs, robot_idx, state_dim),
-        "observation.images.camera1": side,
-        "observation.images.camera2": wrist_self,
+        # Match create_dataset.py / create_dataset_robot1.py camera mapping.
+        "observation.images.side_left": side_left,
+        "observation.images.wrist": wrist,
+        "observation.images.side_right": side_right,
     }
 
-    # Training used rename_map(side->camera1, wrist->camera2) + empty_cameras.
-    # So any extra camera keys are filled with zeros instead of another robot's wrist view.
+    # Any extra camera keys are filled with zeros.
     for key, meta in input_features.items():
         if key in obs or not key.startswith("observation.images."):
             continue
-        shape = meta.get("shape", [3, side.shape[0], side.shape[1]])
+        shape = meta.get("shape", [3, side_left.shape[0], side_left.shape[1]])
         if len(shape) != 3:
             continue
         c, h, w = int(shape[0]), int(shape[1]), int(shape[2])
@@ -201,15 +219,18 @@ def build_policy_observation(
 
 def policy_label(camera_name: str, active_policy_robots: set[int]) -> str | None:
     labels = []
-    if camera_name == "sideview":
-        if 0 in active_policy_robots:
-            labels.append("policy0 cam1")
-        if 1 in active_policy_robots:
-            labels.append("policy1 cam1")
+    if camera_name == "sideview_robot0_left" and 0 in active_policy_robots:
+        labels.append("policy0 side_left")
+    elif camera_name == "sideview_robot0_right" and 0 in active_policy_robots:
+        labels.append("policy0 side_right")
+    elif camera_name == "sideview_robot1_left" and 1 in active_policy_robots:
+        labels.append("policy1 side_left")
+    elif camera_name == "sideview_robot1_right" and 1 in active_policy_robots:
+        labels.append("policy1 side_right")
     elif camera_name == "robot0_eye_in_hand" and 0 in active_policy_robots:
-        labels.append("policy0 cam2")
+        labels.append("policy0 wrist")
     elif camera_name == "robot1_eye_in_hand" and 1 in active_policy_robots:
-        labels.append("policy1 cam2")
+        labels.append("policy1 wrist")
     if not labels:
         return None
     return ", ".join(labels)
@@ -251,9 +272,13 @@ def build_render_frame(env_obs: dict, camera: str, active_policy_robots: set[int
             raise KeyError(f"Missing {key}. Available keys: {sorted(env_obs.keys())}")
         return draw_camera_labels(preprocess_image(env_obs[key]), camera, active_policy_robots)
 
-    preferred = [f"{name}_image" for name in RENDER_CAMERAS]
+    preferred = [f"{name}_image" for name in [*POLICY_CAMERAS, *RENDER_CAMERAS]]
     imgs = []
+    seen = set()
     for key in preferred:
+        if key in seen:
+            continue
+        seen.add(key)
         if key not in env_obs:
             continue
         camera_name = key.removesuffix("_image")
@@ -285,7 +310,7 @@ def build_render_frame(env_obs: dict, camera: str, active_policy_robots: set[int
 
 def camera_names_for_env(camera: str) -> list[str]:
     if camera == "all":
-        return RENDER_CAMERAS.copy()
+        return list(dict.fromkeys([*POLICY_CAMERAS, *RENDER_CAMERAS]))
     return list(dict.fromkeys([*POLICY_CAMERAS, camera]))
 
 
