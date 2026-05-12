@@ -36,7 +36,7 @@ GRIPPER_CLOSE =  1.0   # gripper 닫기 (집은 채 이동)
 
 # milk 초기 위치: main table 기준 중심 + 반경(원형 샘플링)
 MILK_CENTER = (-0.13, -0.35)
-MILK_RADIUS = 0.1
+MILK_RADIUS = 0.06
 # 잉여 salad_dressing은 MILK_CENTER의 y축 대칭 (x 부호 반전, y 유지)
 SALAD_DRESSING_CENTER = (-MILK_CENTER[0], MILK_CENTER[1])
 SALAD_DRESSING_RADIUS = MILK_RADIUS
