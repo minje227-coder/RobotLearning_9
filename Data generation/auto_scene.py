@@ -37,16 +37,16 @@ GRIPPER_CLOSE =  1.0   # gripper 닫기 (집은 채 이동)
 # milk 초기 위치: main table 기준 중심 + 반경(원형 샘플링)
 MILK_CENTER = (-0.13, -0.35)
 MILK_RADIUS = 0.1
-# 잉여 milk는 MILK_CENTER의 y축 대칭 (x 부호 반전, y 유지)
-DISTRACTOR_MILK_CENTER = (-MILK_CENTER[0], MILK_CENTER[1])
-DISTRACTOR_MILK_RADIUS = MILK_RADIUS
+# 잉여 orange_juice는 MILK_CENTER의 y축 대칭 (x 부호 반전, y 유지)
+ORANGE_JUICE_CENTER = (-MILK_CENTER[0], MILK_CENTER[1])
+ORANGE_JUICE_RADIUS = MILK_RADIUS
 
 # trash_can 배치 위치: main table 기준 중심
 TRASH_CAN_CENTER = (0.00, 0.35)
 
 # trash_can 내부 목표점: trash_can 중심 기준 local xy + 반경(원형 샘플링)
 TARGET_CENTER_LOCAL = (0.00, 0.00)
-TARGET_RADIUS_LOCAL = 0.12
+TARGET_RADIUS_LOCAL = 0.07
 
 # 목표 허용 박스 반폭 (원형 샘플링 점 주변의 작은 목표 영역)
 TARGET_BOX_HALF_SIZE = 0.03
@@ -124,12 +124,12 @@ def tiny_range(center, half_width=0.001):
 rng = random.Random(args.seed)
 milk_xy = sample_point_in_disk(MILK_CENTER, MILK_RADIUS, rng)
 target_local_xy = sample_point_in_disk(TARGET_CENTER_LOCAL, TARGET_RADIUS_LOCAL, rng)
-milk_xy_2 = sample_point_in_disk(DISTRACTOR_MILK_CENTER, DISTRACTOR_MILK_RADIUS, rng)
+orange_juice_xy = sample_point_in_disk(ORANGE_JUICE_CENTER, ORANGE_JUICE_RADIUS, rng)
 
 milk_x = tiny_range(milk_xy[0])
 milk_y = tiny_range(milk_xy[1])
-milk_x_2 = tiny_range(milk_xy_2[0])
-milk_y_2 = tiny_range(milk_xy_2[1])
+orange_juice_x = tiny_range(orange_juice_xy[0])
+orange_juice_y = tiny_range(orange_juice_xy[1])
 trash_x = tiny_range(TRASH_CAN_CENTER[0])
 trash_y = tiny_range(TRASH_CAN_CENTER[1])
 
@@ -182,7 +182,7 @@ TRASH_XML_PATH.write_text(
 )
 
 # ==============================================================================
-# dual problem 설정: robot0가 target, robot1 / milk_2는 잉여 (distractor)
+# dual problem 설정: robot0가 target, robot1 / orange_juice_1는 잉여 (distractor)
 # ==============================================================================
 dual_mod.ROBOT_X_OFFSET = ROBOT_X_OFFSET
 dual_mod.HOME_QPOS = HOME_QPOS
@@ -197,9 +197,9 @@ bddl_content = f"""(define (problem {problem_name})
           (:ranges (({milk_x[0]} {milk_y[0]} {milk_x[1]} {milk_y[1]})))
           (:yaw_rotation ((0.0 0.0)))
       )
-      (milk_region_2
+      (orange_juice_region
           (:target main_table)
-          (:ranges (({milk_x_2[0]} {milk_y_2[0]} {milk_x_2[1]} {milk_y_2[1]})))
+          (:ranges (({orange_juice_x[0]} {orange_juice_y[0]} {orange_juice_x[1]} {orange_juice_y[1]})))
           (:yaw_rotation ((0.0 0.0)))
       )
       (trash_can_region
@@ -212,11 +212,11 @@ bddl_content = f"""(define (problem {problem_name})
       )
   )
   (:fixtures main_table - table)
-  (:objects milk_1 milk_2 - milk  trash_can_1 - trash_can)
+  (:objects milk_1 orange_juice_1 - orange_juice  trash_can_1 - trash_can)
   (:obj_of_interest milk_1 trash_can_1)
   (:init
     (On milk_1 main_table_milk_region)
-    (On milk_2 main_table_milk_region_2)
+    (On orange_juice_1 main_table_orange_juice_region)
     (On trash_can_1 main_table_trash_can_region)
   )
   (:goal
@@ -407,10 +407,10 @@ def draw_birdview_regions(img):
     out = img.copy()
     # milk_1 sampling disk (green)
     cv2.polylines(out, [project_circle_to_birdview(MILK_CENTER, MILK_RADIUS)], True, (80, 220, 80), 2)
-    # milk_2 (distractor) sampling disk (yellow-green, dashed-style 다른 색)
+    # orange_juice_1 (distractor) sampling disk (yellow-green, dashed-style 다른 색)
     cv2.polylines(
         out,
-        [project_circle_to_birdview(DISTRACTOR_MILK_CENTER, DISTRACTOR_MILK_RADIUS)],
+        [project_circle_to_birdview(ORANGE_JUICE_CENTER, ORANGE_JUICE_RADIUS)],
         True,
         (80, 220, 220),
         2,
@@ -925,7 +925,7 @@ print(f"grasp_qpos={grasp_qpos.tolist()}")
 print(f"preplace_qpos={preplace_qpos.tolist()}")
 print(f"place_qpos={place_qpos.tolist()}")
 print(f"milk_xy={milk_xy}")
-print(f"milk_xy_2={milk_xy_2}")
+print(f"orange_juice_xy={orange_juice_xy}")
 print(f"trash_can_center={list(TRASH_CAN_CENTER)}")
 print(f"target_local_xy={[target_x, target_y]}")
 print(f"target_global_xy={trash_goal_global}")
