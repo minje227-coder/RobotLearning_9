@@ -46,7 +46,7 @@ TRASH_CAN_CENTER = (0.00, 0.35)
 
 # trash_can 내부 목표점: trash_can 중심 기준 local xy + 반경(원형 샘플링)
 TARGET_CENTER_LOCAL = (0.00, 0.00)
-TARGET_RADIUS_LOCAL = 0.07
+TARGET_RADIUS_LOCAL = 0.06
 
 # 목표 허용 박스 반폭 (원형 샘플링 점 주변의 작은 목표 영역)
 TARGET_BOX_HALF_SIZE = 0.03
