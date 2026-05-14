@@ -24,3 +24,6 @@ __pycache__/
 # generated videos / logs
 *.mp4
 *_generation_log.jsonl
+
+# local dataset
+dataset_3view_v2/
