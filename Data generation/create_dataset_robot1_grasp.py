@@ -33,7 +33,7 @@ else:
     LEROBOT_IMPORT_ERROR = None
 
 
-TASK_DESCRIPTION = "put the distractor salad dressing into the target area inside the trash can"
+TASK_DESCRIPTION = "put the distractor orange juice into the target area inside the trash can"
 
 ROBOT_X_OFFSET = 0.48
 HOME_QPOS = [0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785]
@@ -114,7 +114,7 @@ class EpisodeSpec:
     seed: int
     bddl_file: pathlib.Path
     milk_xy: list[float]
-    salad_dressing_xy: list[float]
+    orange_juice_xy: list[float]
     target_local_xy: list[float]
     target_global_xy: list[float]
 
@@ -214,13 +214,13 @@ def build_episode_spec(seed: int) -> EpisodeSpec:
     rng = random.Random(seed)
     milk_xy = sample_point_in_disk(MILK_CENTER, MILK_RADIUS, rng)
     target_local_xy = sample_point_in_disk(TARGET_CENTER_LOCAL, TARGET_RADIUS_LOCAL, rng)
-    salad_dressing_xy = sample_point_in_disk(DISTRACTOR_MILK_CENTER, DISTRACTOR_MILK_RADIUS, rng)
+    orange_juice_xy = sample_point_in_disk(DISTRACTOR_MILK_CENTER, DISTRACTOR_MILK_RADIUS, rng)
     target_x, target_y = write_trash_can_xml(target_local_xy)
 
     milk_x = tiny_range(milk_xy[0])
     milk_y = tiny_range(milk_xy[1])
-    salad_dressing_x = tiny_range(salad_dressing_xy[0])
-    salad_dressing_y = tiny_range(salad_dressing_xy[1])
+    orange_juice_x = tiny_range(orange_juice_xy[0])
+    orange_juice_y = tiny_range(orange_juice_xy[1])
     trash_x = tiny_range(TRASH_CAN_CENTER[0])
     trash_y = tiny_range(TRASH_CAN_CENTER[1])
 
@@ -237,9 +237,9 @@ def build_episode_spec(seed: int) -> EpisodeSpec:
           (:ranges (({milk_x[0]} {milk_y[0]} {milk_x[1]} {milk_y[1]})))
           (:yaw_rotation ((0.0 0.0)))
       )
-      (salad_dressing_region
+      (orange_juice_region
           (:target main_table)
-          (:ranges (({salad_dressing_x[0]} {salad_dressing_y[0]} {salad_dressing_x[1]} {salad_dressing_y[1]})))
+          (:ranges (({orange_juice_x[0]} {orange_juice_y[0]} {orange_juice_x[1]} {orange_juice_y[1]})))
           (:yaw_rotation ((0.0 0.0)))
       )
       (trash_can_region
@@ -252,15 +252,15 @@ def build_episode_spec(seed: int) -> EpisodeSpec:
       )
   )
   (:fixtures main_table - table)
-  (:objects milk_1 - milk  salad_dressing_1 - salad_dressing  trash_can_1 - trash_can)
-  (:obj_of_interest salad_dressing_1 trash_can_1)
+  (:objects milk_1 - milk  orange_juice_1 - orange_juice  trash_can_1 - trash_can)
+  (:obj_of_interest orange_juice_1 trash_can_1)
   (:init
     (On milk_1 main_table_milk_region)
-    (On salad_dressing_1 main_table_salad_dressing_region)
+    (On orange_juice_1 main_table_orange_juice_region)
     (On trash_can_1 main_table_trash_can_region)
   )
   (:goal
-    (And (In salad_dressing_1 trash_can_1_contain_region))
+    (And (In orange_juice_1 trash_can_1_contain_region))
   )
 )"""
     tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".bddl", delete=False)
@@ -272,7 +272,7 @@ def build_episode_spec(seed: int) -> EpisodeSpec:
         seed=seed,
         bddl_file=pathlib.Path(tmp.name),
         milk_xy=milk_xy,
-        salad_dressing_xy=salad_dressing_xy,
+        orange_juice_xy=orange_juice_xy,
         target_local_xy=[target_x, target_y],
         target_global_xy=target_global_xy,
     )
@@ -480,10 +480,10 @@ def make_debug_frame(obs, image_rotation):
 def solve_waypoints(env, obs):
     sim = env.env.sim
     robot1 = env.env.robots[1]
-    salad_dressing_pos = np.asarray(obs["salad_dressing_1_pos"], dtype=float)
-    milk_pick_xyz = salad_dressing_pos + np.array([0.0, 0.0, GRASP_Z_OFFSET])
-    milk_above_xyz = salad_dressing_pos + np.array([0.0, 0.0, PREGRASP_Z_OFFSET])
-    postgrasp_lift_xyz = salad_dressing_pos + np.array([0.0, 0.0, POSTGRASP_LIFT_Z_OFFSET])
+    orange_juice_pos = np.asarray(obs["orange_juice_1_pos"], dtype=float)
+    milk_pick_xyz = orange_juice_pos + np.array([0.0, 0.0, GRASP_Z_OFFSET])
+    milk_above_xyz = orange_juice_pos + np.array([0.0, 0.0, PREGRASP_Z_OFFSET])
+    postgrasp_lift_xyz = orange_juice_pos + np.array([0.0, 0.0, POSTGRASP_LIFT_Z_OFFSET])
     trash_target_xyz = np.asarray(sim.data.get_site_xpos("trash_can_1_contain_region"), dtype=float)
     trash_above_xyz = trash_target_xyz + np.array([0.0, 0.0, PREPLACE_Z_OFFSET])
     retreat_xyz = trash_target_xyz + np.array([0.0, 0.0, RETREAT_Z_OFFSET])
@@ -706,7 +706,7 @@ def generate_raw_attempt(
             "raw_path": str(raw_path) if raw_path else None,
             "debug_path": str(debug_path) if debug_path else None,
             "milk_xy": spec.milk_xy,
-            "salad_dressing_xy": spec.salad_dressing_xy,
+            "orange_juice_xy": spec.orange_juice_xy,
             "trash_can_center": list(TRASH_CAN_CENTER),
             "target_local_xy": spec.target_local_xy,
             "target_global_xy": spec.target_global_xy,
@@ -912,7 +912,7 @@ def create_dataset(args):
                         "saved": result.success,
                         "num_steps": result.num_steps,
                         "milk_xy": spec.milk_xy,
-                        "salad_dressing_xy": spec.salad_dressing_xy,
+                        "orange_juice_xy": spec.orange_juice_xy,
                         "trash_can_center": list(TRASH_CAN_CENTER),
                         "target_local_xy": spec.target_local_xy,
                         "target_global_xy": spec.target_global_xy,

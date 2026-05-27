@@ -56,7 +56,23 @@ def parse_args():
         help="Backward-compatible alias to set both --robot0-policy-path and --robot1-policy-path.",
     )
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
-    parser.add_argument("--task", default="pick up and place the milk in the trash can")
+    parser.add_argument("--task", default="put the milk into the black box")
+    parser.add_argument(
+        "--robot0-task",
+        default=None,
+        help="Language instruction for robot0 policy inference. Defaults to --task.",
+    )
+    parser.add_argument(
+        "--robot1-task",
+        default=None,
+        help="Language instruction for robot1 policy inference. Defaults to --task.",
+    )
+    parser.add_argument(
+        "--robot1-target-object",
+        choices=["milk", "dressing", "salad_dressing"],
+        default="milk",
+        help="Target object used to build the default robot1 task when --robot1-task is omitted.",
+    )
     parser.add_argument(
         "--seed",
         type=int,
@@ -69,7 +85,15 @@ def parse_args():
     parser.add_argument("--fps", type=int, default=FPS_DEFAULT)
     parser.add_argument("--vcodec", default="libx264")
     parser.add_argument("--camera", choices=DATASET_CAMERAS, default="sideview")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.robot0_task is None:
+        args.robot0_task = args.task
+    if args.robot1_task is None:
+        if args.robot1_target_object == "milk":
+            args.robot1_task = args.task
+        else:
+            args.robot1_task = args.task.replace("milk", "salad dressing")
+    return args
 
 
 def resolve_policy_root(policy_ref: str | Path) -> Path:
@@ -143,8 +167,8 @@ class LoadedPolicy:
     def reset(self) -> None:
         self.model.reset()
 
-    def infer(self, obs: dict[str, np.ndarray]) -> np.ndarray:
-        policy_obs = prepare_observation_for_inference(obs, self.device, task=None, robot_type=None)
+    def infer(self, obs: dict[str, np.ndarray], task: str | None = None) -> np.ndarray:
+        policy_obs = prepare_observation_for_inference(obs, self.device, task=task, robot_type=None)
         policy_obs = self.preprocessor(policy_obs)
         with torch.inference_mode():
             action = self.model.select_action(policy_obs)
@@ -202,18 +226,6 @@ def build_policy_observation(
         "observation.images.wrist": wrist,
         "observation.images.side_right": side_right,
     }
-
-    # Any extra camera keys are filled with zeros.
-    for key, meta in input_features.items():
-        if key in obs or not key.startswith("observation.images."):
-            continue
-        shape = meta.get("shape", [3, side_left.shape[0], side_left.shape[1]])
-        if len(shape) != 3:
-            continue
-        c, h, w = int(shape[0]), int(shape[1]), int(shape[2])
-        if c != 3:
-            continue
-        obs[key] = np.zeros((h, w, 3), dtype=np.uint8)
 
     return obs
 
@@ -315,6 +327,38 @@ def camera_names_for_env(camera: str) -> list[str]:
     return list(dict.fromkeys([*POLICY_CAMERAS, camera]))
 
 
+def patch_bddl_target_object(spec, target_object: str, language: str) -> str:
+    if target_object == "milk":
+        object_name = "milk_2"
+    elif target_object in {"dressing", "salad_dressing"}:
+        object_name = "salad_dressing_1"
+    else:
+        raise ValueError(f"Unsupported target object: {target_object}")
+
+    content = spec.bddl_file.read_text(encoding="utf-8")
+    if target_object == "milk":
+        content = content.replace("salad_dressing_region", "milk_2_region")
+        content = content.replace(
+            "milk_1 - milk  salad_dressing_1 - salad_dressing  trash_can_1 - trash_can",
+            "milk_1 milk_2 - milk  trash_can_1 - trash_can",
+        )
+        content = content.replace("salad_dressing_1", "milk_2")
+    content = content.replace(
+        "(:language put the milk into the target area inside the trash can)",
+        f"(:language {language})",
+    )
+    content = content.replace(
+        "(:obj_of_interest milk_1 trash_can_1)",
+        f"(:obj_of_interest {object_name} trash_can_1)",
+    )
+    content = content.replace(
+        "(And (In milk_1 trash_can_1_contain_region))",
+        f"(And (In {object_name} trash_can_1_contain_region))",
+    )
+    spec.bddl_file.write_text(content, encoding="utf-8")
+    return object_name
+
+
 def load_policy(policy_ref: str | Path | None, device: torch.device, name: str) -> tuple[LoadedPolicy | None, Path | None]:
     if policy_ref is None:
         print(f"[info] {name}_policy=fixed_action")
@@ -323,11 +367,11 @@ def load_policy(policy_ref: str | Path | None, device: torch.device, name: str) 
     return LoadedPolicy(policy_root, device), policy_root
 
 
-def select_robot_action(policy: LoadedPolicy | None, obs: dict, robot_idx: int) -> np.ndarray:
+def select_robot_action(policy: LoadedPolicy | None, obs: dict, robot_idx: int, task: str | None) -> np.ndarray:
     if policy is None:
         return FIXED_ACTION.copy()
     policy_obs = build_policy_observation(obs, robot_idx, policy.state_dim, policy.input_features)
-    return policy.infer(policy_obs)
+    return policy.infer(policy_obs, task=task)
 
 
 def replay_episode(args) -> None:
@@ -344,6 +388,10 @@ def replay_episode(args) -> None:
     active_policy_robots = {idx for idx, policy in enumerate([policy0, policy1]) if policy is not None}
 
     spec = create_dataset.build_episode_spec(episode_seed)
+    robot1_target_object = patch_bddl_target_object(spec, args.robot1_target_object, args.robot1_task)
+    print(f"[info] robot0_task={args.robot0_task}")
+    print(f"[info] robot1_task={args.robot1_task}")
+    print(f"[info] robot1_target_object={robot1_target_object}")
     env = None
     try:
         env_cameras = camera_names_for_env(args.camera)
@@ -368,8 +416,8 @@ def replay_episode(args) -> None:
         frames = []
         for step in range(rollout_steps):
             frames.append(build_render_frame(obs, args.camera, active_policy_robots))
-            robot0_action = select_robot_action(policy0, obs, 0)
-            robot1_action = select_robot_action(policy1, obs, 1)
+            robot0_action = select_robot_action(policy0, obs, 0, args.robot0_task)
+            robot1_action = select_robot_action(policy1, obs, 1, args.robot1_task)
             obs, _, env_done, _ = env.step(make_dual_action(robot0_action, robot1_action))
             obs = env.env._get_observations()
             if env_done:

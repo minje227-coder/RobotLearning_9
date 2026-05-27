@@ -12,7 +12,7 @@ import pandas as pd
 
 DEFAULT_DATASET_ROOT = Path(__file__).with_name("lerobot_robot0_dataset_v3")
 DEFAULT_ROBOT1_DATASET_ROOT = Path(__file__).with_name("lerobot_robot1_dataset_v3")
-DATASET_CAMERAS = ["sideview", "robot0_eye_in_hand"]
+DATASET_CAMERAS = ["sideview", "sideview_robot0_left", "robot0_eye_in_hand", "sideview_robot0_right"]
 FPS_DEFAULT = 10
 RESOLUTION_DEFAULT = 256
 
@@ -52,7 +52,8 @@ def parse_args():
     parser.add_argument("--max-steps", type=int, default=None)
     parser.add_argument("--resolution", type=int, default=RESOLUTION_DEFAULT)
     parser.add_argument("--fps", type=int, default=FPS_DEFAULT)
-    parser.add_argument("--camera", choices=DATASET_CAMERAS, default="sideview")
+    parser.add_argument("--vcodec", default="libx264")
+    parser.add_argument("--camera", choices=DATASET_CAMERAS, default="sideview_robot0_left")
     return parser.parse_args()
 
 
@@ -150,7 +151,13 @@ def replay_episode(args) -> None:
         env.env.sim.forward()
         obs = env.env._get_observations()
 
-        image_key = f"{args.camera}_image"
+        camera_aliases = {
+            "sideview": "sideview_robot0_left",
+            "sideview_robot0_left": "sideview_robot0_left",
+            "sideview_robot0_right": "sideview_robot0_right",
+            "robot0_eye_in_hand": "robot0_eye_in_hand",
+        }
+        image_key = f"{camera_aliases[args.camera]}_image"
         if image_key not in obs:
             raise KeyError(f"Missing {image_key}. Available keys: {sorted(obs.keys())}")
 
@@ -163,7 +170,7 @@ def replay_episode(args) -> None:
                 print(f"[info] env_done=True at step {step}; continuing replay actions.")
 
         args.video_out.parent.mkdir(parents=True, exist_ok=True)
-        imageio.mimwrite(args.video_out, frames, fps=args.fps)
+        imageio.mimwrite(args.video_out, frames, fps=args.fps, codec=args.vcodec)
         print(f"Saved: {args.video_out}")
         print(f"robot0_dataset_root={robot0_dataset_root}")
         print(f"robot1_dataset_root={robot1_dataset_root}")

@@ -77,8 +77,6 @@ def parse_args():
     parser.add_argument("--max-steps", type=int, default=400)
     parser.add_argument("--resolution", type=int, default=RESOLUTION_DEFAULT)
     parser.add_argument("--fps", type=int, default=FPS_DEFAULT)
-    parser.add_argument("--robot0-start-delay-sec", type=float, default=0.0, help="Delay before robot0 scripted grasp starts.")
-    parser.add_argument("--robot1-start-delay-sec", type=float, default=0.0, help="Delay before robot1 scripted grasp starts.")
     parser.add_argument("--vcodec", default="libx264")
     parser.add_argument("--camera", choices=DATASET_CAMERAS, default="sideview")
     return parser.parse_args()
@@ -424,6 +422,7 @@ def replay_episode(args) -> None:
                 grasp_done0 = True
                 grasp_done1 = False
                 move_sequence0 = []
+            using_policy = False
         else:
             waypoints0 = create_dataset.solve_waypoints(env, obs)
             waypoints1 = create_dataset_robot1.solve_waypoints(env, obs)
@@ -445,133 +444,171 @@ def replay_episode(args) -> None:
             move_index1 = 0
             grasp_done0 = False
             grasp_done1 = False
-        policy_active0 = False
-        policy_active1 = False
-        robot0_start_delay_steps = max(0, int(round(args.robot0_start_delay_sec * args.fps)))
-        robot1_start_delay_steps = max(0, int(round(args.robot1_start_delay_sec * args.fps)))
-        robot0_started = robot0_start_delay_steps == 0
-        robot1_started = robot1_start_delay_steps == 0
+            using_policy = False
         frames = []
 
         for step in range(rollout_steps):
-            label_robots = {
-                idx
-                for idx, (policy, is_active) in enumerate(
-                    [(policy0, policy_active0), (policy1, policy_active1)]
-                )
-                if policy is not None and is_active
-            }
+            label_robots = active_policy_robots if using_policy else set()
             frames.append(build_render_frame(obs, args.camera, label_robots))
-            cur0 = obs["robot0_joint_pos"]
-            cur1 = create_dataset_robot1.get_robot_joint_pos(env, 1)
 
-            robot0_action = FIXED_ACTION.copy()
-            robot1_action = FIXED_ACTION.copy()
+            if not using_policy:
+                cur0 = obs["robot0_joint_pos"]
+                cur1 = create_dataset_robot1.get_robot_joint_pos(env, 1)
 
-            script_robot0 = ((not single_policy_mode) or single_policy_robot == 0) and not policy_active0
-            script_robot1 = ((not single_policy_mode) or single_policy_robot == 1) and not policy_active1
-
-            if script_robot0:
-                if not robot0_started:
-                    robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_OPEN)
-                elif not grasp_done0:
-                    if phase0 == "open_then_approach":
-                        robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_OPEN)
-                        if phase_steps0 > create_dataset.OPEN_GRIPPER_INIT_STEPS:
-                            move_index0 = 0
-                            phase0 = move_sequence0[move_index0][0]
-                            phase_steps0 = 0
-                    elif phase0 in [name for name, _, _ in move_sequence0]:
-                        _, target_qpos0, gripper_cmd0 = move_sequence0[move_index0]
-                        robot0_action = create_dataset.make_joint_position_action(target_qpos0, cur0, gripper_cmd=gripper_cmd0)
-                        tol0 = create_dataset.PHASE_TOL_OVERRIDE.get(phase0, create_dataset.JOINT_TOL)
-                        timeout0 = create_dataset.PHASE_TIMEOUT_OVERRIDE.get(phase0, create_dataset.PHASE_TIMEOUT_STEPS)
-                        timed_out0 = timeout0 is not None and phase_steps0 >= timeout0
-                        if create_dataset.joint_distance_to(obs, target_qpos0) < tol0 or timed_out0:
-                            move_index0 += 1
-                            if move_index0 >= len(move_sequence0):
-                                phase0 = "close_gripper"
+                if single_policy_mode:
+                    if single_policy_robot == 0:
+                        if not grasp_done0:
+                            if phase0 == "open_then_approach":
+                                robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_OPEN)
+                                if phase_steps0 > create_dataset.OPEN_GRIPPER_INIT_STEPS:
+                                    move_index0 = 0
+                                    phase0 = move_sequence0[move_index0][0]
+                                    phase_steps0 = 0
+                            elif phase0 in [name for name, _, _ in move_sequence0]:
+                                _, target_qpos0, gripper_cmd0 = move_sequence0[move_index0]
+                                robot0_action = create_dataset.make_joint_position_action(target_qpos0, cur0, gripper_cmd=gripper_cmd0)
+                                tol0 = create_dataset.PHASE_TOL_OVERRIDE.get(phase0, create_dataset.JOINT_TOL)
+                                timeout0 = create_dataset.PHASE_TIMEOUT_OVERRIDE.get(phase0, create_dataset.PHASE_TIMEOUT_STEPS)
+                                timed_out0 = timeout0 is not None and phase_steps0 >= timeout0
+                                if create_dataset.joint_distance_to(obs, target_qpos0) < tol0 or timed_out0:
+                                    move_index0 += 1
+                                    if move_index0 >= len(move_sequence0):
+                                        phase0 = "close_gripper"
+                                    else:
+                                        phase0 = move_sequence0[move_index0][0]
+                                    phase_steps0 = 0
+                            elif phase0 == "close_gripper":
+                                robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_CLOSE)
+                                close_hold_steps0 += 1
+                                if close_hold_steps0 >= create_dataset.GRIP_CLOSE_HOLD_STEPS:
+                                    phase0 = "grasp_hold"
+                                    grasp_done0 = True
+                            elif phase0 == "grasp_hold":
+                                robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_CLOSE)
                             else:
+                                robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_CLOSE)
+                        else:
+                            robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_CLOSE)
+                        robot1_action = FIXED_ACTION.copy()
+                    else:
+                        robot0_action = FIXED_ACTION.copy()
+                        if not grasp_done1:
+                            if phase1 == "open_then_approach":
+                                robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_OPEN)
+                                if phase_steps1 > create_dataset_robot1.OPEN_GRIPPER_INIT_STEPS:
+                                    move_index1 = 0
+                                    phase1 = move_sequence1[move_index1][0]
+                                    phase_steps1 = 0
+                            elif phase1 in [name for name, _, _ in move_sequence1]:
+                                _, target_qpos1, gripper_cmd1 = move_sequence1[move_index1]
+                                robot1_action = create_dataset_robot1.make_joint_position_action(target_qpos1, cur1, gripper_cmd=gripper_cmd1)
+                                tol1 = create_dataset_robot1.PHASE_TOL_OVERRIDE.get(phase1, create_dataset_robot1.JOINT_TOL)
+                                timeout1 = create_dataset_robot1.PHASE_TIMEOUT_OVERRIDE.get(phase1, create_dataset_robot1.PHASE_TIMEOUT_STEPS)
+                                timed_out1 = timeout1 is not None and phase_steps1 >= timeout1
+                                if create_dataset_robot1.joint_distance_to(env, target_qpos1) < tol1 or timed_out1:
+                                    move_index1 += 1
+                                    if move_index1 >= len(move_sequence1):
+                                        phase1 = "close_gripper"
+                                    else:
+                                        phase1 = move_sequence1[move_index1][0]
+                                    phase_steps1 = 0
+                            elif phase1 == "close_gripper":
+                                robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_CLOSE)
+                                close_hold_steps1 += 1
+                                if close_hold_steps1 >= create_dataset_robot1.GRIP_CLOSE_HOLD_STEPS:
+                                    phase1 = "grasp_hold"
+                                    grasp_done1 = True
+                            elif phase1 == "grasp_hold":
+                                robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_CLOSE)
+                            else:
+                                robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_CLOSE)
+                        else:
+                            robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_CLOSE)
+                else:
+                    if not grasp_done0:
+                        if phase0 == "open_then_approach":
+                            robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_OPEN)
+                            if phase_steps0 > create_dataset.OPEN_GRIPPER_INIT_STEPS:
+                                move_index0 = 0
                                 phase0 = move_sequence0[move_index0][0]
-                            phase_steps0 = 0
-                    elif phase0 == "close_gripper":
-                        robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_CLOSE)
-                        close_hold_steps0 += 1
-                        if close_hold_steps0 >= create_dataset.GRIP_CLOSE_HOLD_STEPS:
-                            phase0 = "grasp_hold"
-                            grasp_done0 = True
-                    elif phase0 == "grasp_hold":
-                        robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_CLOSE)
+                                phase_steps0 = 0
+                        elif phase0 in [name for name, _, _ in move_sequence0]:
+                            _, target_qpos0, gripper_cmd0 = move_sequence0[move_index0]
+                            robot0_action = create_dataset.make_joint_position_action(target_qpos0, cur0, gripper_cmd=gripper_cmd0)
+                            tol0 = create_dataset.PHASE_TOL_OVERRIDE.get(phase0, create_dataset.JOINT_TOL)
+                            timeout0 = create_dataset.PHASE_TIMEOUT_OVERRIDE.get(phase0, create_dataset.PHASE_TIMEOUT_STEPS)
+                            timed_out0 = timeout0 is not None and phase_steps0 >= timeout0
+                            if create_dataset.joint_distance_to(obs, target_qpos0) < tol0 or timed_out0:
+                                move_index0 += 1
+                                if move_index0 >= len(move_sequence0):
+                                    phase0 = "close_gripper"
+                                else:
+                                    phase0 = move_sequence0[move_index0][0]
+                                phase_steps0 = 0
+                        elif phase0 == "close_gripper":
+                            robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_CLOSE)
+                            close_hold_steps0 += 1
+                            if close_hold_steps0 >= create_dataset.GRIP_CLOSE_HOLD_STEPS:
+                                phase0 = "grasp_hold"
+                                grasp_done0 = True
+                        elif phase0 == "grasp_hold":
+                            robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_CLOSE)
+                        else:
+                            robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_CLOSE)
                     else:
                         robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_CLOSE)
-                else:
-                    robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_CLOSE)
-            elif policy_active0:
-                robot0_action = select_robot_action(policy0, env, obs, 0, args.robot0_task)
 
-            if script_robot1:
-                if not robot1_started:
-                    robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_OPEN)
-                elif not grasp_done1:
-                    if phase1 == "open_then_approach":
-                        robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_OPEN)
-                        if phase_steps1 > create_dataset_robot1.OPEN_GRIPPER_INIT_STEPS:
-                            move_index1 = 0
-                            phase1 = move_sequence1[move_index1][0]
-                            phase_steps1 = 0
-                    elif phase1 in [name for name, _, _ in move_sequence1]:
-                        _, target_qpos1, gripper_cmd1 = move_sequence1[move_index1]
-                        robot1_action = create_dataset_robot1.make_joint_position_action(target_qpos1, cur1, gripper_cmd=gripper_cmd1)
-                        tol1 = create_dataset_robot1.PHASE_TOL_OVERRIDE.get(phase1, create_dataset_robot1.JOINT_TOL)
-                        timeout1 = create_dataset_robot1.PHASE_TIMEOUT_OVERRIDE.get(phase1, create_dataset_robot1.PHASE_TIMEOUT_STEPS)
-                        timed_out1 = timeout1 is not None and phase_steps1 >= timeout1
-                        if create_dataset_robot1.joint_distance_to(env, target_qpos1) < tol1 or timed_out1:
-                            move_index1 += 1
-                            if move_index1 >= len(move_sequence1):
-                                phase1 = "close_gripper"
-                            else:
+                    if not grasp_done1:
+                        if phase1 == "open_then_approach":
+                            robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_OPEN)
+                            if phase_steps1 > create_dataset_robot1.OPEN_GRIPPER_INIT_STEPS:
+                                move_index1 = 0
                                 phase1 = move_sequence1[move_index1][0]
-                            phase_steps1 = 0
-                    elif phase1 == "close_gripper":
-                        robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_CLOSE)
-                        close_hold_steps1 += 1
-                        if close_hold_steps1 >= create_dataset_robot1.GRIP_CLOSE_HOLD_STEPS:
-                            phase1 = "grasp_hold"
-                            grasp_done1 = True
-                    elif phase1 == "grasp_hold":
-                        robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_CLOSE)
+                                phase_steps1 = 0
+                        elif phase1 in [name for name, _, _ in move_sequence1]:
+                            _, target_qpos1, gripper_cmd1 = move_sequence1[move_index1]
+                            robot1_action = create_dataset_robot1.make_joint_position_action(target_qpos1, cur1, gripper_cmd=gripper_cmd1)
+                            tol1 = create_dataset_robot1.PHASE_TOL_OVERRIDE.get(phase1, create_dataset_robot1.JOINT_TOL)
+                            timeout1 = create_dataset_robot1.PHASE_TIMEOUT_OVERRIDE.get(phase1, create_dataset_robot1.PHASE_TIMEOUT_STEPS)
+                            timed_out1 = timeout1 is not None and phase_steps1 >= timeout1
+                            if create_dataset_robot1.joint_distance_to(env, target_qpos1) < tol1 or timed_out1:
+                                move_index1 += 1
+                                if move_index1 >= len(move_sequence1):
+                                    phase1 = "close_gripper"
+                                else:
+                                    phase1 = move_sequence1[move_index1][0]
+                                phase_steps1 = 0
+                        elif phase1 == "close_gripper":
+                            robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_CLOSE)
+                            close_hold_steps1 += 1
+                            if close_hold_steps1 >= create_dataset_robot1.GRIP_CLOSE_HOLD_STEPS:
+                                phase1 = "grasp_hold"
+                                grasp_done1 = True
+                        elif phase1 == "grasp_hold":
+                            robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_CLOSE)
+                        else:
+                            robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_CLOSE)
                     else:
                         robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_CLOSE)
-                else:
-                    robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_CLOSE)
-            elif policy_active1:
-                robot1_action = select_robot_action(policy1, env, obs, 1, args.robot1_task)
 
-            obs, _, env_done, _ = env.step(make_dual_action(robot0_action, robot1_action))
-            lock_passive_robot_for_single_policy()
-            obs = env.env._get_observations()
-
-            if script_robot0 and not robot0_started:
-                robot0_start_delay_steps -= 1
-                if robot0_start_delay_steps <= 0:
-                    robot0_started = True
-                    print(f"[info] robot0 start delay elapsed at step {step}; starting scripted grasp")
-            elif script_robot0:
+                obs, _, env_done, _ = env.step(make_dual_action(robot0_action, robot1_action))
+                lock_passive_robot_for_single_policy()
+                obs = env.env._get_observations()
                 phase_steps0 += 1
-            if script_robot1 and not robot1_started:
-                robot1_start_delay_steps -= 1
-                if robot1_start_delay_steps <= 0:
-                    robot1_started = True
-                    print(f"[info] robot1 start delay elapsed at step {step}; starting scripted grasp")
-            elif script_robot1:
                 phase_steps1 += 1
 
-            if policy0 is not None and grasp_done0 and not policy_active0:
-                policy_active0 = True
-                print(f"[info] robot0 reached grasp_hold at step {step}; enabling policy0")
-            if policy1 is not None and grasp_done1 and not policy_active1:
-                policy_active1 = True
-                print(f"[info] robot1 reached grasp_hold at step {step}; enabling policy1")
+                if grasp_done0 and grasp_done1:
+                    using_policy = True
+                    if single_policy_mode:
+                        print(f"[info] grasp_hold reached for the policy-loaded robot at step {step}; switching to policy control")
+                    else:
+                        print(f"[info] both robots reached grasp_hold at step {step}; switching to policy control")
+            else:
+                robot0_action = select_robot_action(policy0, env, obs, 0, args.robot0_task)
+                robot1_action = select_robot_action(policy1, env, obs, 1, args.robot1_task)
+                obs, _, env_done, _ = env.step(make_dual_action(robot0_action, robot1_action))
+                lock_passive_robot_for_single_policy()
+                obs = env.env._get_observations()
 
             if env_done:
                 print(f"[info] env_done=True at step {step}; continuing replay actions.")
