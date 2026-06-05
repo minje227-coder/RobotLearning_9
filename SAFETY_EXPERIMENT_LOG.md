@@ -96,4 +96,30 @@
 - 충돌 부위 분포(48건 중): 그리퍼-그리퍼 34, 나머지는 link5/6/7 등 팔 상부 클래시. → **두 팔이 중앙 trash can으로 동시에 접근하며 손끝이 부딪히는 게 지배적 실패 모드.**
 - **해석**: 안전 레이어 없이 두 정책을 동시에 돌리면 96%에서 팔-팔 충돌, safe-success 0%. Phase 2(CBF)의 대조군으로 충분히 강한 베이스라인.
 
-- (다음) Phase 2 — 듀얼암 CBF(상대팔=동적 타원체) + Jacobian 관절 역매핑. 같은 50 seed로 VLSA 1개/2개 측정 → 본 표와 대조.
+- Phase 2 — 듀얼암 CBF(상대팔=동적 타원체) + Jacobian 관절 역매핑 구현·측정 (아래).
+
+### 2026-06-05 (Phase 2)
+- **CBF 구현** `Test/cbf_safety.py`: 상대팔 EE를 타원체(semi-axes 0.06/0.12/0.11 + margin)로 보고, 중심연결선 방향 반경으로 `h = dist − r_self − r_other − margin`. 이산 CBF half-space projection으로 EE 변위 보정 → **damped Jacobian 역매핑**으로 관절 보정(정책 의도 보존, 위반 시에만 개입). QP 솔버 불필요(단일 선형제약 closed-form).
+- **action_scale 보정**: JointPositionController가 1 control step에 목표 delta의 일부만 실현 → 정상상태 측정으로 `action_scale=0.166` 확정(J@dq → 실제 EE 변위). 방향 cos≈1.
+- **하네스 통합**: `run_safety_eval.py --safety-arms {none|0|1|0 1}` (VLSA 0/1/2), 개입수·min_h 기록, 영상 옵션.
+- **충돌검출 영상**: VLSA-0 대표 seed(1,3 충돌 / 8,26 성공) → `Test/results/videos/VLSA0_v4_seed*.mp4`.
+
+#### 결과 — VLSA 매트릭스 (robot0_v4/robot1_v4, seeds 1~50, max-steps 400)
+
+| 조건 | safety arms | TSR | CAR(전체) | CAR(정책구간) | 평균 개입수 | grasp단계 충돌 |
+|---|---|---|---|---|---|---|
+| **VLSA-0** (없음) | – | 4% | 4% | 16% | 0 | 6 |
+| **VLSA-1** (arm0) | [0] | 0% | 42% | 54% | 28.9 | 6 |
+| **VLSA-2** (양팔) | [0,1] | 0% | 64% | 76% | 50.1 | 6 |
+
+- **핵심**: CBF가 충돌을 단조적으로 크게 줄임. CAR 4%→42%→64% (VLSA-2 = 16× baseline). 정책구간 한정 CAR은 16%→54%→76%로 CBF 효과가 더 뚜렷. → 논문 핵심 가설("VLSA가 충돌 회피율을 높인다")의 듀얼암 버전 **검증 성공**.
+- **VLSA-1의 한계**: 한쪽만 회피하면 상대가 밀고 들어와 절반가량만 회피(비대칭, 4-seed 검증서 arm0 0% vs arm1 50%). 머리 맞댄 head-on에선 양팔 모두 안전(VLSA-2)이 필요.
+- **grasp단계 충돌 6건은 세 조건 공통**: 스크립트 grasp 구간(정책·CBF 적용 전) 충돌이라 구조적으로 CBF가 못 막음 → CAR 상한을 제약. (정책구간 CAR이 더 공정한 CBF 지표)
+- **TSR 트레이드오프 (4%→0%)**: 양팔이 **같은 중앙 trash can**에 넣어야 해서, 강한 상호회피가 중앙 근접을 막아 성공률이 떨어짐. 논문 5.3의 "safety-induced distribution shift"가 공유목표 기하로 증폭된 사례. baseline TSR도 4%로 이미 매우 낮음(동시 비협조 정책의 태스크 난이도).
+- **CBF 파라미터**: margin 0.04, alpha 0.5, scale 0.166, damping 0.05.
+
+#### 한계 / 다음 후보
+- TSR 회복: 시작시점 stagger(이미 `_delay_ver` 실험 흔적), 또는 trash can 분리/순차 배치, margin·alpha 튜닝으로 안전↔성공 균형점 탐색.
+- grasp단계도 CBF로 보호(현재 정책구간만).
+- Phase 3: 정적 장애물(GroundingDINO/타원체) 추가한 매트릭스.
+- 산출물: `Test/results/{baseline_v4,vlsa1_v4,vlsa2_v4}.{csv,json}`, `cbf_safety.py`, `run_safety_eval.py`.
