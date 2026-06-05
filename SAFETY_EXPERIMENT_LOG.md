@@ -81,6 +81,19 @@
   - 다중 seed 루프, **팔-팔 충돌검출**(`arm_arm_contact`: contact의 두 geom이 robot0↔robot1이면 충돌), TSR/CAR/safe-success 집계 → CSV+JSON.
   - 실행: `lerobot` env + `MUJOCO_GL=egl`, 정책 1회 로드 후 에피소드마다 reset.
 - **충돌검출 검증**: 스모크 3 에피소드 모두 충돌. 접촉 geom이 `gripper0_hand_collision|gripper1_hand_collision`, `gripper0_hand_collision|robot1_link7_collision` 등 실제 팔-팔 접촉으로 확인(오탐 아님). 충돌 step seed별 상이(30/36/93).
-- **베이스라인(VLSA 0) 실행 중**: robot0_v4/robot1_v4, seeds 1~50, max-steps 400 → `Test/results/baseline_v4.{csv,json}`.
-  - 에피소드당 ~17s. (결과는 완료 후 본 로그에 추가)
-- (다음) 베이스라인 수치 확정 → Phase 2(듀얼암 CBF, VLSA 1/2개) 설계.
+- **베이스라인(VLSA 0) 완료**: robot0_v4/robot1_v4, seeds 1~50, max-steps 400 → `Test/results/baseline_v4.{csv,json}`.
+
+#### 결과 — VLSA 0개 (안전장치 없음), N=50
+
+| 지표 | 값 |
+|---|---|
+| **TSR** (task success rate) | **4%** (2/50) |
+| **CAR** (collision avoidance rate) | **4%** (2/50 무충돌, 즉 48/50 충돌) |
+| **safe-success** (성공 & 무충돌) | **0%** |
+
+- 충돌 step: min 28 / median 91 / max 177 (스크립트 grasp 이후 정책 구간에서 주로 발생).
+- 성공 seed: 8, 26 (정책 자체는 성공 가능 → 성공 지표 유효). 단 둘 다 충돌 동반.
+- 충돌 부위 분포(48건 중): 그리퍼-그리퍼 34, 나머지는 link5/6/7 등 팔 상부 클래시. → **두 팔이 중앙 trash can으로 동시에 접근하며 손끝이 부딪히는 게 지배적 실패 모드.**
+- **해석**: 안전 레이어 없이 두 정책을 동시에 돌리면 96%에서 팔-팔 충돌, safe-success 0%. Phase 2(CBF)의 대조군으로 충분히 강한 베이스라인.
+
+- (다음) Phase 2 — 듀얼암 CBF(상대팔=동적 타원체) + Jacobian 관절 역매핑. 같은 50 seed로 VLSA 1개/2개 측정 → 본 표와 대조.
