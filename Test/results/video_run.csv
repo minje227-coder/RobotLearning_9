@@ -1,0 +1,5 @@
+seed,success,collided,safe_success,collision_step,collision_geoms,grasp0_step,grasp1_step,steps,wall_sec
+1,False,True,False,30,gripper0_hand_collision | gripper1_hand_collision,58,55,400,22.8
+3,False,True,False,95,robot0_link7_collision | robot1_link7_collision,59,55,400,20.7
+8,True,True,False,66,gripper0_hand_collision | gripper1_hand_collision,58,58,400,20.8
+26,True,True,False,111,robot0_link6_collision | robot1_link6_collision,56,58,400,21.4

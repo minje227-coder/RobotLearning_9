@@ -36,6 +36,8 @@ import sys
 import time
 from pathlib import Path
 
+import random as _random
+
 import imageio
 import numpy as np
 import torch
@@ -89,6 +91,7 @@ def run_episode(args, seed: int, policy0, policy1, video_path: Path | None = Non
 
     rollout_steps = args.max_steps
     safety_arms = set(args.safety_arms or [])
+    active_arms = set(args.active_arms if args.active_arms is not None else [0, 1])
     spec = create_dataset.build_episode_spec(seed)
     env = None
     t0 = time.time()
@@ -134,6 +137,16 @@ def run_episode(args, seed: int, policy0, policy1, video_path: Path | None = Non
             policy0.reset()
         if policy1 is not None:
             policy1.reset()
+
+        # Per-episode RNG seeding: SmolVLA action generation (flow-matching) draws
+        # from the global torch RNG, which otherwise advances across episodes and
+        # makes batch results differ from fresh single-episode runs. Reseeding here
+        # makes each (seed) episode reproducible and batch == sum of singles.
+        _random.seed(seed)
+        np.random.seed(seed % (2**32 - 1))
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
 
         # Both arms: scripted grasp -> policy handoff (dual-policy / VLSA-0 baseline).
         waypoints0 = create_dataset.solve_waypoints(env, obs)
@@ -249,7 +262,17 @@ def run_episode(args, seed: int, policy0, policy1, video_path: Path | None = Non
                 robot1_action = tmg.select_robot_action(policy1, env, obs, 1, args.robot1_task)
                 robot1_action = apply_cbf(robot1_action, 1, 0)
 
+            # Park inactive arms in their passive pose (single-arm ceiling runs).
+            if 0 not in active_arms:
+                robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_OPEN)
+            if 1 not in active_arms:
+                robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_OPEN)
+
             obs, _, env_done, _ = env.step(tmg.make_dual_action(robot0_action, robot1_action))
+            if 1 not in active_arms:
+                create_dataset.lock_robot1_pose(env.env.sim, env.env.robots[1])
+            if 0 not in active_arms:
+                create_dataset_robot1.lock_robot0_pose(env.env.sim, env.env.robots[0])
             obs = env.env._get_observations()
 
             # ---- collision check (robot0 <-> robot1 mujoco contact) ----
@@ -323,6 +346,8 @@ def parse_args():
     # --- dual-arm CBF safety layer ---
     p.add_argument("--safety-arms", type=int, nargs="*", default=None,
                    help="which arms get the CBF safety layer: none / 0 / 1 / 0 1 (VLSA 0/1/2)")
+    p.add_argument("--active-arms", type=int, nargs="*", default=None,
+                   help="which arms are active; others are locked in passive pose (default: 0 1)")
     p.add_argument("--cbf-margin", type=float, default=0.04, help="EE ellipsoid inflation margin (m)")
     p.add_argument("--cbf-alpha", type=float, default=0.5, help="discrete CBF decay (0,1]")
     p.add_argument("--cbf-scale", type=float, default=0.166, help="action->EE displacement scale (calibrated)")

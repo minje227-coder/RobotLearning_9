@@ -1,0 +1,11 @@
+seed,success,collided,safe_success,collision_step,collision_geoms,grasp0_step,grasp1_step,steps,n_intervene,min_h,wall_sec
+1,False,False,False,-1,,57,101,400,0,,16.5
+2,False,False,False,-1,,56,101,400,0,,15.6
+3,False,False,False,-1,,59,101,400,0,,15.4
+4,False,False,False,-1,,59,101,400,0,,15.1
+5,False,False,False,-1,,56,101,400,0,,14.9
+6,False,False,False,-1,,54,101,400,0,,15.8
+7,False,False,False,-1,,58,101,400,0,,14.8
+8,False,False,False,-1,,58,101,400,0,,14.5
+9,True,False,True,-1,,56,101,400,0,,14.9
+10,False,False,False,-1,,55,101,400,0,,14.9
