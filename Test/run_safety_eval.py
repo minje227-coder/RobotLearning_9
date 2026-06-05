@@ -36,6 +36,7 @@ import sys
 import time
 from pathlib import Path
 
+import imageio
 import numpy as np
 import torch
 
@@ -46,6 +47,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))  # for importing test_m
 
 # Stable, side-effect-free helpers reused from the existing harness.
 import test_model_grasp as tmg  # noqa: E402
+import cbf_safety  # noqa: E402
 
 
 # --------------------------------------------------------------------------- #
@@ -81,18 +83,44 @@ def arm_arm_contact(sim):
 # Single-episode rollout (mirrors test_model_grasp.replay_episode, dual mode,
 # without video; adds contact tracking + returns metrics).
 # --------------------------------------------------------------------------- #
-def run_episode(args, seed: int, policy0, policy1) -> dict:
+def run_episode(args, seed: int, policy0, policy1, video_path: Path | None = None) -> dict:
     import create_dataset_grasp as create_dataset
     import create_dataset_robot1_grasp as create_dataset_robot1
 
     rollout_steps = args.max_steps
+    safety_arms = set(args.safety_arms or [])
     spec = create_dataset.build_episode_spec(seed)
     env = None
     t0 = time.time()
+    frames = []
+    n_intervene = 0
+    min_h = float("inf")
+
+    def apply_cbf(action, self_idx, other_idx):
+        """Wrap a policy action with the dual-arm CBF safety correction."""
+        nonlocal n_intervene, min_h
+        if self_idx not in safety_arms:
+            return action
+        out, info = cbf_safety.cbf_correct_action(
+            env.env.sim, env.env.robots[self_idx],
+            obs[f"robot{self_idx}_eef_pos"], obs[f"robot{self_idx}_eef_quat"],
+            obs[f"robot{other_idx}_eef_pos"], obs[f"robot{other_idx}_eef_quat"],
+            action,
+            margin=args.cbf_margin, alpha=args.cbf_alpha,
+            damping=args.cbf_damping, action_scale=args.cbf_scale,
+        )
+        min_h = min(min_h, info["h"])
+        if info["intervened"]:
+            n_intervene += 1
+        return out
+    # For video we also render birdview/backview (top-down clearly shows arm-arm
+    # contact); metrics-only runs use the minimal policy-camera set for speed.
+    render_camera = args.video_camera if video_path is not None else None
     try:
         # Register the 6 policy cameras (robot0/robot1 side_left/wrist/side_right)
         # so build_policy_observation can find them, matching test_model_grasp.
-        create_dataset.DATASET_CAMERAS = tmg.camera_names_for_env("sideview")
+        cam_select = "all" if video_path is not None else "sideview"
+        create_dataset.DATASET_CAMERAS = tmg.camera_names_for_env(cam_select)
         create_dataset.DEBUG_CAMERAS = []
         env, obs = create_dataset.make_env(spec, args.resolution, save_debug_video=False)
         create_dataset.set_free_joint_xy(
@@ -138,6 +166,10 @@ def run_episode(args, seed: int, policy0, policy1) -> dict:
 
         for step in range(rollout_steps):
             actual_steps = step + 1
+            if render_camera is not None:
+                label_robots = {idx for idx, (pol, act) in enumerate(
+                    [(policy0, policy_active0), (policy1, policy_active1)]) if pol is not None and act}
+                frames.append(tmg.build_render_frame(obs, render_camera, label_robots))
             cur0 = obs["robot0_joint_pos"]
             cur1 = create_dataset_robot1.get_robot_joint_pos(env, 1)
 
@@ -180,6 +212,7 @@ def run_episode(args, seed: int, policy0, policy1) -> dict:
                     robot0_action = create_dataset.make_joint_position_action(cur0, cur0, gripper_cmd=create_dataset.GRIPPER_CLOSE)
             elif policy_active0:
                 robot0_action = tmg.select_robot_action(policy0, env, obs, 0, args.robot0_task)
+                robot0_action = apply_cbf(robot0_action, 0, 1)
 
             if script_robot1:
                 if not robot1_started:
@@ -214,6 +247,7 @@ def run_episode(args, seed: int, policy0, policy1) -> dict:
                     robot1_action = create_dataset_robot1.make_joint_position_action(cur1, cur1, gripper_cmd=create_dataset_robot1.GRIPPER_CLOSE)
             elif policy_active1:
                 robot1_action = tmg.select_robot_action(policy1, env, obs, 1, args.robot1_task)
+                robot1_action = apply_cbf(robot1_action, 1, 0)
 
             obs, _, env_done, _ = env.step(tmg.make_dual_action(robot0_action, robot1_action))
             obs = env.env._get_observations()
@@ -244,6 +278,9 @@ def run_episode(args, seed: int, policy0, policy1) -> dict:
                 policy_active1 = True
 
         success = bool(env.env._check_success())
+        if video_path is not None and frames:
+            video_path.parent.mkdir(parents=True, exist_ok=True)
+            imageio.mimwrite(str(video_path), frames, fps=args.fps, codec="libx264")
         return {
             "seed": seed,
             "success": success,
@@ -254,6 +291,8 @@ def run_episode(args, seed: int, policy0, policy1) -> dict:
             "grasp0_step": grasp0_step,
             "grasp1_step": grasp1_step,
             "steps": actual_steps,
+            "n_intervene": n_intervene,
+            "min_h": None if min_h == float("inf") else round(min_h, 4),
             "wall_sec": round(time.time() - t0, 1),
         }
     finally:
@@ -281,6 +320,16 @@ def parse_args():
     p.add_argument("--out-csv", type=Path, default=Path(__file__).with_name("results") / "baseline.csv")
     p.add_argument("--out-json", type=Path, default=Path(__file__).with_name("results") / "baseline.json")
     p.add_argument("--label", default="VLSA0_baseline_v4", help="label for this run (stored in json)")
+    # --- dual-arm CBF safety layer ---
+    p.add_argument("--safety-arms", type=int, nargs="*", default=None,
+                   help="which arms get the CBF safety layer: none / 0 / 1 / 0 1 (VLSA 0/1/2)")
+    p.add_argument("--cbf-margin", type=float, default=0.04, help="EE ellipsoid inflation margin (m)")
+    p.add_argument("--cbf-alpha", type=float, default=0.5, help="discrete CBF decay (0,1]")
+    p.add_argument("--cbf-scale", type=float, default=0.166, help="action->EE displacement scale (calibrated)")
+    p.add_argument("--cbf-damping", type=float, default=0.05, help="damped pseudo-inverse lambda")
+    p.add_argument("--video-seeds", type=int, nargs="*", default=None, help="seeds to also render to mp4")
+    p.add_argument("--video-camera", default="all", help="render camera for video (all/sideview/birdview/...)")
+    p.add_argument("--video-dir", type=Path, default=Path(__file__).with_name("results") / "videos")
     return p.parse_args()
 
 
@@ -293,13 +342,18 @@ def main():
     policy0, _ = tmg.load_policy(args.robot0_policy_path, device, "robot0")
     policy1, _ = tmg.load_policy(args.robot1_policy_path, device, "robot1")
 
+    video_seeds = set(args.video_seeds or [])
     rows = []
     for i, seed in enumerate(seeds):
-        r = run_episode(args, seed, policy0, policy1)
+        vpath = (args.video_dir / f"{args.label}_seed{seed}.mp4") if seed in video_seeds else None
+        r = run_episode(args, seed, policy0, policy1, video_path=vpath)
+        if vpath is not None:
+            r["video"] = str(vpath)
         rows.append(r)
         print(f"[{i+1}/{len(seeds)}] seed={seed} success={r['success']} "
               f"collided={r['collided']} safe={r['safe_success']} "
-              f"coll_step={r['collision_step']} steps={r['steps']} ({r['wall_sec']}s)", flush=True)
+              f"coll_step={r['collision_step']} intervene={r['n_intervene']} "
+              f"min_h={r['min_h']} steps={r['steps']} ({r['wall_sec']}s)", flush=True)
 
     n = len(rows)
     tsr = sum(r["success"] for r in rows) / n
@@ -307,6 +361,9 @@ def main():
     safe = sum(r["safe_success"] for r in rows) / n
     summary = {
         "label": args.label,
+        "safety_arms": sorted(set(args.safety_arms or [])),
+        "cbf": {"margin": args.cbf_margin, "alpha": args.cbf_alpha,
+                "scale": args.cbf_scale, "damping": args.cbf_damping},
         "robot0_policy": str(args.robot0_policy_path),
         "robot1_policy": str(args.robot1_policy_path),
         "num_episodes": n,
@@ -322,8 +379,9 @@ def main():
 
     args.out_csv.parent.mkdir(parents=True, exist_ok=True)
     args.out_json.parent.mkdir(parents=True, exist_ok=True)
+    csv_fields = [k for k in rows[0].keys() if k != "video"]
     with args.out_csv.open("w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        w = csv.DictWriter(f, fieldnames=csv_fields, extrasaction="ignore")
         w.writeheader()
         w.writerows(rows)
     with args.out_json.open("w") as f:
