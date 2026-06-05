@@ -1,0 +1,56 @@
+Traceback (most recent call last):
+  File "/home/minje/miniconda3/envs/lerobot/bin/lerobot-train", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/minje/RobotLearning_9/Train/lerobot/src/lerobot/scripts/lerobot_train.py", line 595, in main
+    train()
+  File "/home/minje/RobotLearning_9/Train/lerobot/src/lerobot/configs/parser.py", line 232, in wrapper_inner
+    cfg = draccus.parse(config_class=argtype, config_path=config_path, args=cli_args)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/site-packages/draccus/argparsing.py", line 204, in parse
+    parser = ArgumentParser(
+             ^^^^^^^^^^^^^^^
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/site-packages/draccus/argparsing.py", line 73, in __init__
+    self._set_dataclass(config_class)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/site-packages/draccus/argparsing.py", line 87, in _set_dataclass
+    new_wrapper.register_actions(parser=self.parser)
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/site-packages/draccus/wrappers/dataclass_wrapper.py", line 69, in register_actions
+    child.register_actions(parser)
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/site-packages/draccus/wrappers/choice_wrapper.py", line 208, in register_actions
+    child.register_actions(parser)
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/site-packages/draccus/wrappers/choice_wrapper.py", line 83, in register_actions
+    child.register_actions(parser)
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/site-packages/draccus/wrappers/dataclass_wrapper.py", line 71, in register_actions
+    child.add_action(group)
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/site-packages/draccus/wrappers/field_wrapper.py", line 309, in add_action
+    logger.debug(f"Arg options for field '{self.name}': {self.arg_options}")
+                                                         ^^^^^^^^^^^^^^^^
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/site-packages/draccus/wrappers/field_wrapper.py", line 85, in arg_options
+    options = self.get_arg_options()
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/site-packages/draccus/wrappers/field_wrapper.py", line 111, in get_arg_options
+    if self.help:
+       ^^^^^^^^^
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/site-packages/draccus/wrappers/field_wrapper.py", line 258, in help
+    self._docstring = docstring.get_attribute_docstring(self.parent.dataclass, self.field.name)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/site-packages/draccus/wrappers/docstring.py", line 63, in get_attribute_docstring
+    source = inspect.getsource(some_dataclass)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/inspect.py", line 1285, in getsource
+    lines, lnum = getsourcelines(object)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/inspect.py", line 1277, in getsourcelines
+    return getblock(lines[lnum:]), lnum + 1
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/inspect.py", line 1244, in getblock
+    for _token in tokens:
+                  ^^^^^^
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/tokenize.py", line 585, in _generate_tokens_from_c_tokenizer
+    yield TokenInfo._make(info)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/minje/miniconda3/envs/lerobot/lib/python3.12/collections/__init__.py", line 447, in _make
+    @classmethod
+
+KeyboardInterrupt

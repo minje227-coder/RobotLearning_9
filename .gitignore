@@ -1,0 +1,29 @@
+Data generation/dataset_*/
+Data generation/lerobot_*_dataset*/
+Data generation/output/
+Data generation/*_debug_videos/
+Data generation/__pycache__/
+
+# ML outputs / checkpoints
+outputs/
+wandb/
+runs/
+checkpoints/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.pkl
+*.h5
+*.hdf5
+
+# Python cache
+__pycache__/
+*.pyc
+
+# generated videos / logs
+*.mp4
+*_generation_log.jsonl
+
+# local dataset
+dataset_3view_v2/
