@@ -27,3 +27,5 @@ __pycache__/
 
 # local dataset
 dataset_3view_v2/
+Test/results/*.log
+Test/results/smoke.*

@@ -74,6 +74,13 @@
 ### 2026-06-05
 - 프로젝트/논문/원본 repo 숙지 완료. 6개 SmolVLA 런 + 데이터 파이프라인 + AEGIS CBF 구조 파악.
 - 실험 인프라 현황 점검: 측정 하네스·듀얼 CBF 부재 확인. 관절공간 vs Cartesian CBF 미스매치 식별.
-- 실행 env(`lerobot`)·GPU·robot geom 네이밍 확인 작업 진행.
-- `hannuri` 브랜치에 `main` 병합 완료 후 푸시. 본 로그 파일 생성.
-- (다음) Phase 1 하네스(`Test/run_safety_eval.py`) 작성 → 베이스라인 측정.
+- 실행 env(`lerobot`)·GPU·robot geom 네이밍 확인. geom: `robot0_*`/`robot1_*`/`gripper{0,1}_*`, 각 66개.
+- `hannuri` 브랜치에 `main` 병합(`910f44f`) 후 푸시. 본 로그 파일 생성.
+- **Phase 1 하네스 작성**: `Test/run_safety_eval.py` 신규.
+  - `test_model_grasp.py`의 안정 헬퍼 재사용 + 에피소드 드라이버(스크립트 grasp→정책 핸드오프) 재구현.
+  - 다중 seed 루프, **팔-팔 충돌검출**(`arm_arm_contact`: contact의 두 geom이 robot0↔robot1이면 충돌), TSR/CAR/safe-success 집계 → CSV+JSON.
+  - 실행: `lerobot` env + `MUJOCO_GL=egl`, 정책 1회 로드 후 에피소드마다 reset.
+- **충돌검출 검증**: 스모크 3 에피소드 모두 충돌. 접촉 geom이 `gripper0_hand_collision|gripper1_hand_collision`, `gripper0_hand_collision|robot1_link7_collision` 등 실제 팔-팔 접촉으로 확인(오탐 아님). 충돌 step seed별 상이(30/36/93).
+- **베이스라인(VLSA 0) 실행 중**: robot0_v4/robot1_v4, seeds 1~50, max-steps 400 → `Test/results/baseline_v4.{csv,json}`.
+  - 에피소드당 ~17s. (결과는 완료 후 본 로그에 추가)
+- (다음) 베이스라인 수치 확정 → Phase 2(듀얼암 CBF, VLSA 1/2개) 설계.
