@@ -3,7 +3,7 @@
     <body>
       <body name="object">
         <inertial pos="0 0 0.075" mass="1000.0" diaginertia="0.005 0.005 0.005"/>
-        <site type="box" pos="-0.024025217982311907 -0.012835206917093422 0.075" quat="1 0 0 0" size="0.03 0.03 0.065" group="0" rgba="0 0.8 0 0" name="contain_region"/>
+        <site type="box" pos="-0.03359240648282066 -0.0475059872977183 0.075" quat="1 0 0 0" size="0.03 0.03 0.065" group="0" rgba="0 0.8 0 0" name="contain_region"/>
         <geom solimp="0.998 0.998 0.001" solref="0.001 1" density="200" friction="0.95 0.3 0.1" group="1" rgba="0.20 0.20 0.20 1" type="box" pos="0 0 0.005" size="0.16 0.16 0.005"/>
         <geom solimp="0.998 0.998 0.001" solref="0.001 1" density="200" friction="0.95 0.3 0.1" group="1" rgba="0.20 0.20 0.20 1" type="box" pos="0 0.155 0.075" size="0.15 0.005 0.065"/>
         <geom solimp="0.998 0.998 0.001" solref="0.001 1" density="200" friction="0.95 0.3 0.1" group="1" rgba="0.20 0.20 0.20 1" type="box" pos="0 -0.155 0.075" size="0.15 0.005 0.065"/>
