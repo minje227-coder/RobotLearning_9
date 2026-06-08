@@ -123,3 +123,59 @@
 - grasp단계도 CBF로 보호(현재 정책구간만).
 - Phase 3: 정적 장애물(GroundingDINO/타원체) 추가한 매트릭스.
 - 산출물: `Test/results/{baseline_v4,vlsa1_v4,vlsa2_v4}.{csv,json}`, `cbf_safety.py`, `run_safety_eval.py`.
+
+---
+
+### 2026-06-06 ~ 06-08 (Phase 2.5 — 협업자 CBF 통합, delay/horizon/margin 스윕, 단일팔 상한)
+
+#### A. 하네스·CBF 업그레이드 (협업자 Minje 코드 통합)
+- **메인 하네스**를 `Test/minje_run_safety_eval.py`로 전환. 주요 편집:
+  - **멀티타깃 CBF** `Test/minje_cbf_safety.py`: 상대팔을 `grip_site` + `link7` **두 타원체**로 모델링, 스텝마다 **min-h 쌍**을 골라 보정(단일 grip_site보다 보수적·안정). `Q_EF = diag(0.06, 0.12, 0.11)`, margin 기본 0.03, alpha 0.8, side_preference 지원.
+  - **재현성**: 에피소드마다 `torch.manual_seed / np.random.seed / random.seed(seed)` 고정.
+  - **커스텀 성공 판정**: `evaluate_custom_success` = **milk_1 AND orange_juice_1 둘 다 trash 내부 박스 안**(±0.15 m). 즉 본 실험의 **TSR = 두 물체 모두 성공**.
+  - **개별 물체 지표 추가**: `object_placement()` → `milk_inside / orange_inside / *_dist_box / *_z`. 어느 팔이 병목인지 분해 가능.
+  - **`first_intervene_step`** 기록(최초 CBF 개입 step).
+  - **시각화**: 와이어프레임 → **반투명 채움 타원체**(`fillConvexPoly`+alpha 0.38). **팔별 개입 색 구분** — robot0 개입=cyan/magenta, robot1 개입=yellow/orange, 비개입=기본색.
+- **VLSA-1은 robot0(충돌 유발자)에 안전 적용**으로 고정(`--safety-arms 0`). robot1-safety는 효과 미미라 제외.
+- 대표 케이스 영상: `Test/minje_safety_test/cases_vlsa{1,2}/delay_*/` (delay별 폴더, 4-카테고리 분류). **영상(.mp4)은 git 비추적(.gitignore)** — HF/로컬에만 보관.
+
+#### B. 본 실험 — 50-seed delay 그리드 (replan-horizon=50, delay 7.5~12 s, VLSA 0/1/2, 각 50 ep)
+`Test/results/grid_s50/`. 핵심 행만(전체는 `vlsa_delay_grid.xlsx` 8시트):
+
+| 조건 | delay | TSR(둘다) | CAR | safe-succ | milk_in | orange_in |
+|---|---|---|---|---|---|---|
+| **VLSA-0** (안전없음) | 12 | 6% | **0%** | 0% | 76% | 8% |
+| **VLSA-1** (robot0) | **10** | **44%** | 54% | **42%** | 44% | 92% |
+| VLSA-1 | 8.5 | 46% | 2% | 0% | 50% | 76% |
+| **VLSA-2** (양팔) | 10.5 | 32% | **98%** | 32% | 44% | 58% |
+| VLSA-2 | 12 | 12% | 98% | 12% | 42% | 32% |
+
+- **CAR 단조 증가**: VLSA-0 ≈ 0% → VLSA-1 ~50% → VLSA-2 ~98%. 안전팔 수에 따라 충돌회피 단조 상승(논문 가설의 듀얼암 검증).
+- **TSR↔안전 트레이드오프**: VLSA-2는 거의 무충돌이지만 강한 상호회피로 중앙 박스 근접이 막혀 TSR↓(특히 delay 클수록 12%까지 하락). **VLSA-1 delay 10이 safe-success 42%로 최적 균형점.**
+- **병목 분해 (c4 = "피했지만 실패")**: VLSA-1 d10에서 orange_inside 92% vs milk_inside 44%. **CBF 부담을 진 robot0(우유)만 성능 저하**, 무부담 robot1(오렌지)은 단독 수준 유지. → 실패는 충돌이 아니라 **안전유발 궤적왜곡으로 우유를 박스에서 ~25–35 cm 빗나가게 놓는 것**(논문 5.3 distribution shift의 듀얼암·공유목표 증폭).
+- **delay sweet spot**: VLSA-1은 delay 10 부근(safe-success 42%)에서 최고. 너무 짧으면(7.5~9) 충돌, 너무 길면 협응 붕괴.
+
+#### C. replan-horizon 50 vs 10 (10-seed 비교, `grid/` vs `grid_replan10/`)
+- horizon=50(50스텝 재계획)이 TSR 우위. horizon=10은 CAR은 비슷하거나 높지만 **TSR이 0~10%로 붕괴**(잦은 재계획이 일관된 placement 궤적을 깨뜨림). → **본 실험은 horizon 50 채택.**
+
+#### D. 단일팔 상한 baseline (`results/single/`, 상대팔 제거, 50 seed, delay 무관)
+- **robot0 단독: milk_inside 47/50 = 94%**, 충돌 0.
+- **robot1 단독: orange_inside 48/50 = 96%**, 충돌 0.
+- → 두 정책 모두 **단독으론 강력(94/96%)**. 듀얼암 성능저하는 정책 약함이 아니라 **간섭 + 안전유발 왜곡** 때문임을 정량 입증. (단독에선 커스텀 TSR=0인데, 이는 상대 물체가 없어 "둘 다 박스" 조건이 구조적으로 불가능하기 때문 — 개별 inside 지표로 평가.)
+
+#### E. Margin 스윕 (진행 중) — `results/margin/`
+- 설계: **VLSA-1(robot0 safety), delay 10, seeds 0–49**, margin ∈ {0, 0.02, 0.04, 0.06, 0.08, 0.10}. `first_intervene_step / CAR / TSR / safe / milk_dist_box` 곡선으로 **"margin↑ → 개입 빨라짐 → 안전↑/성공↓"** 검증 및 safe-success sweet spot 탐색.
+- **논문엔 margin 항이 없음**(h가 타원체 raw signed distance) → margin 도입은 본 확장의 기여.
+- 상태(2026-06-08): 0.0 / 0.02 정상 진행, 0.04 / 0.06 신규 기동, 0.08 / 0.10 체인 대기. (이전 `run_margin2.sh`의 `local` 1줄 선언 버그로 라벨이 빈 `margin_`이 돼 3 프로세스가 한 파일에 덮어쓰던 것 → 폐기하고 버그 고친 `run_margin3.sh`로 재기동, 마진별 개별 json 보장.)
+
+#### F. 산출물 / 외부 동기화
+- **드라이버 스크립트** `Test/minje_safety_test/`: `run_delay_grid.sh`(h50, seed0-9), `run_grid_s50.sh`(h50, seed0-49), `run_grid_r10.sh`(h10), `run_cases_vlsa{1,2}.sh`(케이스 영상), `run_margin3.sh`(마진 스윕, 버그픽스판).
+- **결과** `Test/results/`: `grid/`, `grid_s50/`, `grid_replan10/`, `single/`, `margin/` (json/csv/log) + `grid/vlsa_delay_grid.xlsx`(8시트).
+- **LaTeX 알고리즘 박스** 작성: "Per-Arm CBF Safety Filtering for Independent Dual-Arm VLA" (multi-target 타원체 min-h, half-space projection, damped Jacobian pseudo-inverse) — 논문 초안용.
+- **Notion** "Experiments" 페이지에 delay/horizon/margin 표 갱신.
+- **Git**: 코드+결과(json/csv/xlsx/sh/log) hannuri 브랜치 push 완료(`4b3d519`). **영상 .mp4(~406 MB, 112개)는 .gitignore로 제외**, sshfs `.fuse_hidden*` 무시 추가.
+
+#### 다음 후보
+- margin 스윕 완료 → safe-success sweet spot 확정, 곡선 그림.
+- 논문 Experiments/Abstract 수치 채우기.
+- (선택) replan=10을 50 seed로 재측정해 horizon 영향 확정.
