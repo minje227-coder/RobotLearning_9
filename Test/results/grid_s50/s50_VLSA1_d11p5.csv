@@ -1,0 +1,51 @@
+seed,success,collided,safe_success,collision_step,collision_geoms,grasp0_step,grasp1_step,steps,n_intervene,min_h,wall_sec,milk_inside,orange_inside,milk_z,milk_dist_box,milk_local_z,orange_z,orange_dist_box,orange_local_z
+0,False,False,False,-1,,55,170,500,25,-0.0835,152.2,False,True,0.97,0.364,0.07,0.98,0.094,0.08
+1,False,True,False,221,robot0_link7_collision | robot1_link6_collision,57,170,500,37,-0.0516,173.5,False,True,0.97,0.233,0.07,0.936,0.111,0.036
+2,True,False,True,-1,,56,170,500,29,-0.1238,188.8,True,True,0.98,0.092,0.08,0.979,0.042,0.079
+3,False,True,False,221,robot0_link7_collision | robot1_link6_collision,59,170,500,35,-0.0556,175.7,False,True,0.97,0.205,0.07,0.98,0.106,0.08
+4,False,True,False,224,robot0_link7_collision | robot1_link6_collision,59,173,500,40,-0.0575,182.2,False,True,0.97,0.227,0.07,0.98,0.097,0.08
+5,False,True,False,218,robot0_link7_collision | robot1_link7_collision,56,168,500,38,-0.0919,203.9,False,True,0.97,0.264,0.07,0.98,0.073,0.08
+6,True,False,True,-1,,54,171,500,31,-0.1224,222.3,True,True,0.98,0.062,0.08,0.937,0.076,0.037
+7,False,False,False,-1,,58,169,500,34,-0.0771,207.1,False,True,0.926,0.279,0.026,0.98,0.088,0.08
+8,False,True,False,226,robot0_link7_collision | robot1_link6_collision,58,173,500,31,-0.0898,203.7,False,True,0.926,0.272,0.026,0.98,0.062,0.08
+9,True,False,True,-1,,56,172,500,33,-0.0322,209.5,True,True,0.98,0.109,0.08,0.98,0.015,0.08
+10,True,False,True,-1,,55,168,500,32,-0.0283,205.5,True,True,0.98,0.117,0.08,0.98,0.062,0.08
+11,False,True,False,219,robot0_link6_collision | robot1_link6_collision,58,170,500,35,-0.026,223.7,False,False,0.97,0.264,0.07,0.97,0.25,0.07
+12,True,False,True,-1,,56,172,500,32,-0.1103,228.8,True,True,0.98,0.067,0.08,0.98,0.051,0.08
+13,False,False,False,-1,,61,173,500,26,-0.1142,221.6,False,True,0.97,0.588,0.07,0.98,0.036,0.08
+14,False,True,False,224,robot0_link7_collision | robot1_link6_collision,59,174,500,36,-0.0581,230.2,False,True,0.97,0.209,0.07,0.936,0.079,0.036
+15,False,False,False,-1,,57,173,500,29,-0.0799,220.3,False,True,0.97,0.232,0.07,0.98,0.061,0.08
+16,False,True,False,222,robot0_link6_collision | robot1_link6_collision,59,172,500,23,-0.0551,224.9,False,False,0.926,0.318,0.026,0.97,0.265,0.07
+17,True,True,False,224,robot0_link7_collision | robot1_link6_collision,56,170,500,31,-0.0998,226.9,True,True,0.98,0.071,0.08,0.98,0.048,0.08
+18,False,True,False,223,robot0_link6_collision | robot1_link6_collision,59,171,500,39,-0.0383,221.1,False,True,0.97,0.214,0.07,0.936,0.13,0.036
+19,True,False,True,-1,,54,172,500,33,-0.0958,224.7,True,True,0.971,0.116,0.071,0.936,0.052,0.036
+20,True,False,True,-1,,55,174,500,32,-0.1207,228.1,True,True,0.936,0.066,0.036,0.936,0.084,0.036
+21,False,False,False,-1,,57,176,500,29,-0.0813,213.4,False,False,0.97,0.194,0.07,0.97,0.714,0.07
+22,False,True,False,223,gripper0_hand_collision | robot1_link7_collision,57,173,500,36,-0.0464,212.4,False,True,0.97,0.295,0.07,0.98,0.072,0.08
+23,False,False,False,-1,,56,170,500,25,-0.078,215.8,False,True,0.927,0.244,0.027,0.98,0.049,0.08
+24,True,False,True,-1,,54,173,500,29,-0.1228,213.8,True,True,0.98,0.074,0.08,0.98,0.059,0.08
+25,True,False,True,-1,,59,168,500,27,-0.0841,194.8,True,True,0.937,0.104,0.037,0.98,0.055,0.08
+26,True,True,False,227,robot0_link7_collision | robot1_link6_collision,56,173,500,35,-0.1119,209.4,True,True,0.937,0.017,0.037,0.976,0.093,0.076
+27,True,False,True,-1,,53,174,500,30,-0.089,227.7,True,True,0.936,0.044,0.036,0.936,0.09,0.036
+28,True,True,False,234,gripper0_finger2_collision | robot1_link7_collision,57,181,500,31,-0.095,227.9,True,True,0.937,0.047,0.037,0.98,0.11,0.08
+29,True,False,True,-1,,56,170,500,27,-0.12,239.3,True,True,0.937,0.051,0.037,1.033,0.033,0.133
+30,True,False,True,-1,,56,174,500,30,-0.1098,219.5,True,True,0.936,0.118,0.036,0.98,0.066,0.08
+31,True,True,False,225,robot0_link7_collision | robot1_link6_collision,56,171,500,29,-0.1227,219.7,True,True,0.937,0.051,0.037,1.032,0.044,0.132
+32,False,False,False,-1,,59,172,500,20,-0.0716,226.5,False,True,0.97,0.26,0.07,0.98,0.047,0.08
+33,True,False,True,-1,,56,169,500,30,-0.1132,225.6,True,True,0.98,0.078,0.08,0.98,0.066,0.08
+34,False,True,False,223,robot0_link5_collision | robot1_link7_collision,57,172,500,39,-0.0379,185.5,False,True,0.97,0.211,0.07,0.936,0.085,0.036
+35,False,True,False,225,robot0_link6_collision | robot1_link6_collision,58,176,500,45,-0.0526,368.7,False,False,0.97,0.215,0.07,0.97,0.69,0.07
+36,False,False,False,-1,,62,169,500,30,-0.0906,190.4,False,True,0.97,0.674,0.07,0.98,0.063,0.08
+37,True,False,True,-1,,57,169,500,31,-0.1136,337.1,True,True,0.98,0.051,0.08,0.98,0.085,0.08
+38,True,True,False,227,gripper0_finger2_collision | robot1_link7_collision,54,169,500,33,-0.1018,249.2,True,True,0.937,0.081,0.037,0.98,0.101,0.08
+39,False,True,False,220,robot0_link7_collision | robot1_link6_collision,58,170,500,39,-0.0484,286.4,False,False,0.97,0.211,0.07,0.927,0.274,0.027
+40,True,False,True,-1,,56,172,500,32,-0.0723,279.1,True,True,0.98,0.071,0.08,0.98,0.02,0.08
+41,False,True,False,222,robot0_link6_collision | robot1_link6_collision,59,170,500,40,-0.0454,249.7,False,True,0.97,0.199,0.07,0.936,0.129,0.036
+42,False,True,False,221,gripper0_hand_collision | gripper1_hand_collision,57,169,500,29,-0.0707,225.6,False,True,0.97,0.22,0.07,0.98,0.083,0.08
+43,False,False,False,-1,,56,171,500,23,-0.0536,231.9,False,True,0.926,0.444,0.026,0.98,0.107,0.08
+44,True,True,False,228,robot0_link6_collision | robot1_link6_collision,61,172,500,29,-0.0677,228.9,True,True,0.937,0.051,0.037,0.974,0.114,0.074
+45,False,True,False,226,robot0_link5_collision | robot1_link7_collision,59,173,500,34,-0.0407,227.8,False,True,0.97,0.188,0.07,0.98,0.124,0.08
+46,True,False,True,-1,,56,174,500,35,-0.0226,226.0,True,True,0.98,0.155,0.08,0.98,0.025,0.08
+47,False,True,False,219,robot0_link6_collision | robot1_link7_collision,62,170,500,44,-0.055,218.9,False,True,0.97,0.733,0.07,0.936,0.108,0.036
+48,False,True,False,225,robot0_link7_collision | robot1_link6_collision,57,172,500,32,-0.1054,228.8,False,True,0.926,0.265,0.026,0.98,0.035,0.08
+49,False,True,False,220,robot0_link6_collision | robot1_link6_collision,59,171,500,42,-0.0801,227.9,False,True,0.97,0.273,0.07,0.98,0.053,0.08

@@ -1,0 +1,21 @@
+[setup] loading policies on cuda ...
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:  23%|██▎       | 113/489 [00:00<00:00, 1128.17it/s]Loading weights:  46%|████▌     | 226/489 [00:00<00:00, 994.48it/s] Loading weights:  71%|███████▏  | 349/489 [00:00<00:00, 1076.41it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 1273.81it/s]
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:  20%|█▉        | 97/489 [00:00<00:00, 969.75it/s]Loading weights:  40%|███▉      | 194/489 [00:00<00:00, 962.22it/s]Loading weights:  65%|██████▍   | 317/489 [00:00<00:00, 1059.64it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 1323Reducing Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+[setup] policy_replan_horizon=50 / 50
+[robosuite WARNING] No private macro file found! (macros.py:53)
+WARNING:robosuite_logs:No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+WARNING:robosuite_logs:It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/youngsoo/miniforge3/envs/lerobot/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+WARNING:robosuite_logs:To setup, run: python /home/youngsoo/miniforge3/envs/lerobot/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional info[1/50] seed=0 success=False collided=False safe=False coll_step=-1 intervene=32 min_h=-0.1026 steps=500 (538.6s)
+717 steps=500 (534.0s)

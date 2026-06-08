@@ -1,0 +1,11 @@
+seed,success,collided,safe_success,collision_step,collision_geoms,grasp0_step,grasp1_step,steps,n_intervene,min_h,wall_sec,milk_inside,orange_inside,milk_z,milk_dist_box,milk_local_z,orange_z,orange_dist_box,orange_local_z
+0,False,False,False,-1,,55,170,500,42,-0.0203,168.3,False,False,0.97,0.364,0.07,0.926,0.223,0.026
+1,False,False,False,-1,,57,170,500,63,-0.0343,180.4,False,False,0.97,0.233,0.07,0.97,0.268,0.07
+2,False,False,False,-1,,56,170,500,45,-0.0407,178.9,True,False,0.98,0.092,0.08,0.97,0.202,0.07
+3,False,False,False,-1,,59,170,500,60,-0.0407,155.4,False,False,0.97,0.205,0.07,0.97,0.269,0.07
+4,False,False,False,-1,,59,173,500,69,-0.0414,133.9,False,False,0.97,0.227,0.07,0.97,0.348,0.07
+5,False,False,False,-1,,56,168,500,66,-0.0388,134.5,False,True,0.97,0.264,0.07,0.936,0.093,0.036
+6,False,False,False,-1,,54,171,500,48,-0.0365,130.1,True,False,0.98,0.059,0.08,0.97,0.218,0.07
+7,False,False,False,-1,,58,169,500,51,-0.0315,93.1,False,False,0.926,0.279,0.026,0.926,0.249,0.026
+8,False,False,False,-1,,58,173,500,58,-0.0355,71.5,False,False,0.926,0.272,0.026,0.97,0.241,0.07
+9,True,False,True,-1,,56,172,500,41,-0.0322,76.0,True,True,0.98,0.118,0.08,0.936,0.097,0.036

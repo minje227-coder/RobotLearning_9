@@ -1,0 +1,53 @@
+RENDER_DONE
+renamed 54 files
+오버레이 영상 27개:
+   VLSA1_d10_c2_safe_seed2_ellipsoid.mp4
+   VLSA1_d10_c3_collFail_seed1_ellipsoid.mp4
+   VLSA1_d10_c4_noColFail_seed0_ellipsoid.mp4
+   VLSA1_d10p5_c2_safe_seed2_ellipsoid.mp4
+   VLSA1_d10p5_c3_collFail_seed1_ellipsoid.mp4
+   VLSA1_d10p5_c4_noColFail_seed0_ellipsoid.mp4
+   VLSA1_d11_c2_safe_seed2_ellipsoid.mp4
+   VLSA1_d11_c3_collFail_seed1_ellipsoid.mp4
+   VLSA1_d11_c4_noColFail_seed0_ellipsoid.mp4
+   VLSA1_d11p5_c2_safe_seed2_ellipsoid.mp4
+   VLSA1_d11p5_c3_collFail_seed1_ellipsoid.mp4
+   VLSA1_d11p5_c4_noColFail_seed0_ellipsoid.mp4
+   VLSA1_d12_c2_safe_seed2_ellipsoid.mp4
+   VLSA1_d12_c3_collFail_seed1_ellipsoid.mp4
+   VLSA1_d12_c4_noColFail_seed0_ellipsoid.mp4
+   VLSA1_d7p5_c1_collSucc_seed1_ellipsoid.mp4
+   VLSA1_d7p5_c3_collFail_seed0_ellipsoid.mp4
+   VLSA1_d8_c1_collSucc_seed1_ellipsoid.mp4
+   VLSA1_d8_c3_collFail_seed0_ellipsoid.mp4
+   VLSA1_d8p5_c1_collSucc_seed6_ellipsoid.mp4
+   VLSA1_d8p5_c3_collFail_seed0_ellipsoid.mp4
+   VLSA1_d9_c1_collSucc_seed7_ellipsoid.mp4
+   VLSA1_d9_c2_safe_seed9_ellipsoid.mp4
+   VLSA1_d9_c3_collFail_seed0_ellipsoid.mp4
+   VLSA1_d9p5_c2_safe_seed2_ellipsoid.mp4
+   VLSA1_d9p5_c3_collFail_seed1_ellipsoid.mp4
+   VLSA1_d9p5_c4_noColFail_seed0_ellipsoid.mp4
+=== cases_vlsa1: 54 files moved ===
+  delay_10/: 6 mp4
+  delay_10.5/: 6 mp4
+  delay_11/: 6 mp4
+  delay_11.5/: 6 mp4
+  delay_12/: 6 mp4
+  delay_7.5/: 4 mp4
+  delay_8/: 4 mp4
+  delay_8.5/: 4 mp4
+  delay_9/: 6 mp4
+  delay_9.5/: 6 mp4
+=== cases_vlsa2: 0 files moved ===
+  delay_10/: 6 mp4
+  delay_10.5/: 4 mp4
+  delay_11/: 4 mp4
+  delay_11.5/: 4 mp4
+  delay_12/: 4 mp4
+  delay_7.5/: 8 mp4
+  delay_8/: 6 mp4
+  delay_8.5/: 6 mp4
+  delay_9/: 8 mp4
+  delay_9.5/: 8 mp4
+CHAIN_V1_DONE

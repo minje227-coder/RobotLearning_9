@@ -1,0 +1,33 @@
+[setup] loading policies on cuda ...
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:  29%|██▊       | 140/489 [00:00<00:00, 1383.55it/s]Loading weights:  57%|█████▋    | 279/489 [00:00<00:00, 1177.87it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 1545.54it/s]
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:  52%|█████▏    | 255/489 [00:00<00:00, 2548.70it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 2926.07it/s]
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+[setup] policy_replan_horizon=50 / 50
+[robosuite WARNING] No private macro file found! (macros.py:53)
+WARNING:robosuite_logs:No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+WARNING:robosuite_logs:It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/youngsoo/miniforge3/envs/lerobot/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+WARNING:robosuite_logs:To setup, run: python /home/youngsoo/miniforge3/envs/lerobot/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+[1/3] seed=0 success=False collided=True safe=False coll_step=93 intervene=67 min_h=-0.0781 steps=500 (207.5s)
+[2/3] seed=1 success=True collided=True safe=False coll_step=100 intervene=49 min_h=-0.0992 steps=500 (181.5s)
+[3/3] seed=7 success=True collided=False safe=True coll_step=-1 intervene=48 min_h=-0.0994 steps=500 (170.2s)
+
+========== SUMMARY ==========
+label   : CASE_V2_d8
+episodes: 3  (seeds 0..7)
+TSR (task success rate)      : 66.67%  (2/3)
+CAR (collision avoidance)    : 33.33%  (1/3)
+safe-success (succ & no coll): 33.33%
+csv : /tmp/case_v2_d8.csv
+json: /tmp/case_v2_d8.json

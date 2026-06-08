@@ -1,0 +1,14 @@
+view 수정[bird, side+z] (side view활용해서 z축 위로 좀 올리고 아래 보면될듯)
+좀더 elipsoid 같이?
+
+사진 3개 뽑기
+1. collsion
+2. 부딪히기 전 h
+3. 지나가고 나서 원래 traj, 피하는 trajectory/ps
+
+seed : 2
+delay : 12
+
+1. 210~252 timestep (2개 robot trajectory다 표시)
+2. 86~134 timestep (robot0만 표시)
+그리고 둘다 표시하는게 아니라 vlsa 적용된 trajectory에서 갈라지는 부분만 vlsa trajectory도 같이 표시해줘 평소에는 그냥 점선만 보이다가 

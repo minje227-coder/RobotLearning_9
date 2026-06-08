@@ -1,0 +1,11 @@
+seed,success,collided,safe_success,collision_step,collision_geoms,grasp0_step,grasp1_step,steps,n_intervene,min_h,wall_sec,milk_inside,orange_inside,milk_z,milk_dist_box,milk_local_z,orange_z,orange_dist_box,orange_local_z
+0,False,False,False,-1,,55,170,500,25,-0.0835,184.8,False,True,0.97,0.364,0.07,0.98,0.094,0.08
+1,False,True,False,221,robot0_link7_collision | robot1_link6_collision,57,170,500,37,-0.0516,163.9,False,True,0.97,0.233,0.07,0.936,0.111,0.036
+2,True,False,True,-1,,56,170,500,29,-0.1238,164.1,True,True,0.98,0.092,0.08,0.979,0.042,0.079
+3,False,True,False,221,robot0_link7_collision | robot1_link6_collision,59,170,500,35,-0.0556,199.8,False,True,0.97,0.205,0.07,0.98,0.106,0.08
+4,False,True,False,224,robot0_link7_collision | robot1_link6_collision,59,173,500,40,-0.0575,191.7,False,True,0.97,0.227,0.07,0.98,0.097,0.08
+5,False,True,False,218,robot0_link7_collision | robot1_link7_collision,56,168,500,38,-0.0919,179.0,False,True,0.97,0.264,0.07,0.98,0.073,0.08
+6,True,False,True,-1,,54,171,500,31,-0.1224,169.2,True,True,0.98,0.062,0.08,0.937,0.076,0.037
+7,False,False,False,-1,,58,169,500,34,-0.0771,176.2,False,True,0.926,0.279,0.026,0.98,0.088,0.08
+8,False,True,False,226,robot0_link7_collision | robot1_link6_collision,58,173,500,31,-0.0898,187.5,False,True,0.926,0.272,0.026,0.98,0.062,0.08
+9,True,False,True,-1,,56,172,500,33,-0.0322,181.3,True,True,0.98,0.109,0.08,0.98,0.015,0.08

@@ -1,0 +1,2 @@
+seed,success,collided,safe_success,collision_step,collision_geoms,grasp0_step,grasp1_step,steps,n_intervene,min_h,wall_sec,milk_inside,orange_inside,milk_z,milk_dist_box,milk_local_z,orange_z,orange_dist_box,orange_local_z,video_overlay
+2,False,False,False,-1,,56,175,500,36,-0.031,266.4,False,False,0.97,0.248,0.07,0.97,0.21,0.07,/home/youngsoo/workspace/RobotLearning_9/Test/figure/figure_vlsa2_seed2_delay12_seed2_ellipsoid.mp4

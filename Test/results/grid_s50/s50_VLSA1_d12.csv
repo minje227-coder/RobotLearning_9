@@ -1,0 +1,51 @@
+seed,success,collided,safe_success,collision_step,collision_geoms,grasp0_step,grasp1_step,steps,n_intervene,min_h,wall_sec,milk_inside,orange_inside,milk_z,milk_dist_box,milk_local_z,orange_z,orange_dist_box,orange_local_z
+0,False,False,False,-1,,55,175,500,28,-0.0744,219.6,False,True,0.97,0.364,0.07,0.98,0.091,0.08
+1,False,True,False,223,robot0_link7_collision | robot1_link6_collision,57,175,500,34,-0.0723,222.0,False,True,0.97,0.233,0.07,0.936,0.113,0.036
+2,True,False,True,-1,,56,175,500,29,-0.1196,227.8,True,True,0.98,0.093,0.08,0.963,0.039,0.063
+3,False,False,False,-1,,59,175,500,28,-0.0958,219.9,False,True,0.926,0.352,0.026,0.98,0.057,0.08
+4,False,False,False,-1,,59,178,500,40,-0.0912,224.2,False,True,0.97,0.256,0.07,0.98,0.04,0.08
+5,False,True,False,223,robot0_link7_collision | robot1_link7_collision,56,173,500,40,-0.0908,221.8,False,True,0.97,0.264,0.07,0.98,0.077,0.08
+6,True,False,True,-1,,54,176,500,33,-0.0974,230.2,True,True,0.98,0.063,0.08,0.98,0.055,0.08
+7,False,True,False,224,robot0_link7_collision | robot1_link6_collision,58,174,500,35,-0.0695,212.1,False,True,0.926,0.281,0.026,0.936,0.093,0.036
+8,False,True,False,229,gripper0_hand_collision | robot1_link6_collision,58,178,500,32,-0.1205,220.8,False,True,0.926,0.279,0.026,0.98,0.075,0.08
+9,True,False,True,-1,,56,177,500,33,-0.0403,224.1,True,True,0.98,0.111,0.08,0.98,0.009,0.08
+10,True,False,True,-1,,55,173,500,31,-0.0323,219.1,True,True,0.98,0.118,0.08,0.98,0.057,0.08
+11,False,True,False,223,robot0_link6_collision | robot1_link7_collision,58,175,500,53,-0.0471,213.8,False,True,0.97,0.279,0.07,0.98,0.092,0.08
+12,True,True,False,234,gripper0_finger2_collision | robot1_link7_collision,56,177,500,34,-0.1045,212.8,True,True,0.98,0.068,0.08,0.98,0.084,0.08
+13,False,False,False,-1,,61,178,500,28,-0.1154,209.2,False,True,0.97,0.588,0.07,0.98,0.037,0.08
+14,False,True,False,229,robot0_link7_collision | robot1_link6_collision,59,179,500,36,-0.0791,202.9,False,True,0.97,0.209,0.07,0.936,0.045,0.036
+15,False,False,False,-1,,57,178,500,36,-0.0926,197.7,False,True,0.97,0.27,0.07,0.98,0.05,0.08
+16,False,True,False,225,robot0_link6_collision | robot1_link6_collision,59,177,500,11,-0.0256,219.2,False,False,0.97,0.206,0.07,0.97,0.272,0.07
+17,True,True,False,228,gripper0_finger1_collision | robot1_link7_collision,56,175,500,29,-0.1117,236.9,True,True,0.98,0.071,0.08,0.98,0.041,0.08
+18,False,True,False,226,robot0_link5_collision | robot1_link7_collision,59,176,500,35,-0.0374,233.6,False,True,0.97,0.212,0.07,0.936,0.127,0.036
+19,True,False,True,-1,,54,177,500,32,-0.1095,228.5,True,True,0.957,0.115,0.057,0.98,0.111,0.08
+20,True,False,True,-1,,55,179,500,31,-0.1013,221.0,True,True,0.936,0.065,0.036,0.936,0.075,0.036
+21,False,False,False,-1,,57,181,500,26,-0.0944,223.7,False,False,0.97,0.196,0.07,0.97,0.716,0.07
+22,False,True,False,228,gripper0_hand_collision | robot1_link7_collision,57,178,500,38,-0.0476,223.8,False,True,0.97,0.295,0.07,0.98,0.071,0.08
+23,False,False,False,-1,,56,175,500,25,-0.0734,220.2,False,True,0.927,0.245,0.027,0.98,0.058,0.08
+24,True,False,True,-1,,54,178,500,29,-0.0994,366.4,True,True,0.98,0.095,0.08,0.937,0.103,0.037
+25,False,False,False,-1,,59,173,500,28,-0.0619,206.1,False,True,0.926,0.273,0.026,0.98,0.063,0.08
+26,True,False,True,-1,,56,178,500,33,-0.1099,319.6,True,True,0.937,0.02,0.037,0.97,0.095,0.07
+27,True,True,False,233,gripper0_finger2_collision | robot1_link7_collision,53,179,500,33,-0.0834,244.3,True,True,0.936,0.04,0.036,0.98,0.092,0.08
+28,True,True,False,238,gripper0_finger2_collision | robot1_link7_collision,57,186,500,29,-0.0751,292.6,True,True,0.937,0.056,0.037,0.996,0.149,0.096
+29,True,False,True,-1,,56,175,500,28,-0.136,235.8,True,True,0.937,0.057,0.037,0.936,0.094,0.036
+30,True,True,False,233,gripper0_finger2_collision | robot1_link7_collision,56,179,500,31,-0.1047,272.8,True,True,0.98,0.061,0.08,0.98,0.128,0.08
+31,True,False,True,-1,,56,176,500,25,-0.0919,222.0,True,True,0.937,0.059,0.037,0.936,0.087,0.036
+32,False,False,False,-1,,59,177,500,20,-0.0613,219.9,False,True,0.97,0.261,0.07,0.98,0.047,0.08
+33,True,True,False,227,gripper0_finger1_collision | robot1_link7_collision,56,174,500,28,-0.1131,232.7,True,True,0.98,0.071,0.08,0.98,0.078,0.08
+34,False,True,False,230,robot0_link6_collision | robot1_link7_collision,57,177,500,37,-0.0372,224.7,False,True,0.97,0.211,0.07,0.937,0.131,0.037
+35,False,True,False,229,robot0_link6_collision | robot1_link6_collision,58,181,500,34,-0.0813,217.8,False,False,0.97,0.213,0.07,0.97,0.69,0.07
+36,False,False,False,-1,,62,174,500,28,-0.1087,217.6,False,True,0.97,0.674,0.07,0.98,0.056,0.08
+37,True,True,False,227,gripper0_finger1_collision | robot1_link7_collision,57,174,500,28,-0.1129,224.0,True,True,0.98,0.049,0.08,0.98,0.092,0.08
+38,True,True,False,229,gripper0_finger2_collision | robot1_link7_collision,54,174,500,32,-0.1116,224.9,True,True,0.937,0.081,0.037,0.98,0.105,0.08
+39,False,True,False,223,robot0_link7_collision | robot1_link6_collision,58,175,500,36,-0.0594,207.8,False,True,0.97,0.218,0.07,0.936,0.108,0.036
+40,True,True,False,233,gripper0_finger2_collision | robot1_link7_collision,56,177,500,29,-0.0983,221.7,True,True,0.98,0.074,0.08,0.98,0.023,0.08
+41,False,True,False,226,robot0_link5_collision | robot1_link7_collision,59,175,500,29,-0.0374,206.0,False,True,0.97,0.192,0.07,0.936,0.121,0.036
+42,False,True,False,225,gripper0_hand_collision | robot1_link7_collision,57,174,500,30,-0.0655,196.8,False,True,0.97,0.22,0.07,0.98,0.088,0.08
+43,False,False,False,-1,,56,176,500,24,-0.0697,205.6,False,True,0.926,0.444,0.026,0.98,0.091,0.08
+44,True,True,False,232,robot0_link6_collision | robot1_link6_collision,61,177,500,28,-0.0595,227.2,True,True,0.937,0.063,0.037,0.98,0.077,0.08
+45,False,True,False,231,robot0_link5_collision | robot1_link7_collision,59,178,500,33,-0.0394,203.9,False,True,0.97,0.199,0.07,0.936,0.096,0.036
+46,True,False,True,-1,,56,179,500,34,-0.0318,198.1,True,True,0.98,0.157,0.08,0.98,0.011,0.08
+47,False,True,False,224,robot0_link6_collision | robot1_link7_collision,62,175,500,45,-0.048,255.5,False,True,0.97,0.734,0.07,0.936,0.102,0.036
+48,False,True,False,233,gripper0_finger2_collision | robot1_link7_collision,57,177,500,29,-0.1203,378.3,False,True,0.926,0.264,0.026,0.98,0.086,0.08
+49,True,False,True,-1,,59,176,500,46,-0.0925,216.3,True,True,0.936,0.055,0.036,0.936,0.076,0.036

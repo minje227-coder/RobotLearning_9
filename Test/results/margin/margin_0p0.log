@@ -1,0 +1,36 @@
+[setup] loading policies on cuda ...
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:   0%|          | 1/489 [00:00<01:00,  8.03it/s]Loading weights:  22%|██▏       | 106/489 [00:00<00:00, 545.34it/s]Loading weights:  60%|██████    | 295/489 [00:00<00:00, 1114.37it/s]Loading weights:  95%|█████████▍| 463/489 [00:00<00:00, 1309.95it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 1080.67it/s]
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:  59%|█████▉    | 289/489 [00:00<00:00, 2876.94it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 3277.58it/s]
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+[setup] policy_replan_horizon=50 / 50
+[robosuite WARNING] No private macro file found! (macros.py:53)
+WARNING:robosuite_logs:No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+WARNING:robosuite_logs:It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/youngsoo/miniforge3/envs/lerobot/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+WARNING:robosuite_logs:To setup, run: python /home/youngsoo/miniforge3/envs/lerobot/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+[1/50] seed=0 success=False collided=True safe=False coll_step=95 intervene=23 min_h=-0.0717 steps=500 (182.7s)
+[2/50] seed=1 success=False collided=True safe=False coll_step=97 intervene=11 min_h=-0.0205 steps=500 (145.2s)
+[3/50] seed=2 success=True collided=True safe=False coll_step=95 intervene=29 min_h=-0.0557 steps=500 (169.8s)
+[4/50] seed=3 success=False collided=False safe=False coll_step=-1 intervene=28 min_h=-0.0618 steps=500 (185.7s)
+[5/50] seed=4 success=False collided=True safe=False coll_step=207 intervene=27 min_h=-0.0615 steps=500 (188.5s)
+[6/50] seed=5 success=False collided=True safe=False coll_step=98 intervene=36 min_h=-0.0435 steps=500 (198.3s)
+[7/50] seed=6 success=True collided=True safe=False coll_step=95 intervene=32 min_h=-0.0596 steps=500 (191.9s)
+[8/50] seed=7 success=False collided=True safe=False coll_step=98 intervene=30 min_h=-0.0701 steps=500 (105.9s)
+[9/50] seed=8 success=False collided=True safe=False coll_step=97 intervene=30 min_h=-0.0801 steps=500 (179.9s)
+[10/50] seed=9 success=True collided=True safe=False coll_step=98 intervene=29 min_h=-0.0681 steps=500 (187.9s)
+[11/50] seed=10 success=True collided=True safe=False coll_step=98 intervene=22 min_h=-0.0148 steps=500 (192.7s)
+[12/50] seed=11 success=True collided=True safe=False coll_step=210 intervene=9 min_h=-0.0228 steps=500 (208.6s)
+[13/50] seed=12 success=False collided=True safe=False coll_step=98 intervene=23 min_h=-0.0169 steps=500 (338.4s)
+[14/50] seed=13 success=False collided=True safe=False coll_step=208 intervene=22 min_h=-0.0626 steps=500 (516.9s)
+[15/50] seed=14 success=False collided=True safe=False coll_step=207 intervene=11 min_h=-0.0243 steps=500 (239.6s)

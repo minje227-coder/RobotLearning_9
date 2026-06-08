@@ -1,0 +1,27 @@
+[chain] VLSA-1 done, starting VLSA-2
+RENDER_DONE
+renamed 58 files
+오버레이 영상 29개
+=== cases_vlsa1: 0 files moved ===
+  delay_10/: 6 mp4
+  delay_10.5/: 6 mp4
+  delay_11/: 6 mp4
+  delay_11.5/: 6 mp4
+  delay_12/: 6 mp4
+  delay_7.5/: 4 mp4
+  delay_8/: 4 mp4
+  delay_8.5/: 4 mp4
+  delay_9/: 6 mp4
+  delay_9.5/: 6 mp4
+=== cases_vlsa2: 58 files moved ===
+  delay_10/: 6 mp4
+  delay_10.5/: 4 mp4
+  delay_11/: 4 mp4
+  delay_11.5/: 4 mp4
+  delay_12/: 4 mp4
+  delay_7.5/: 8 mp4
+  delay_8/: 6 mp4
+  delay_8.5/: 6 mp4
+  delay_9/: 8 mp4
+  delay_9.5/: 8 mp4
+CHAIN_V2_DONE

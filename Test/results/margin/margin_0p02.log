@@ -1,0 +1,39 @@
+[setup] loading policies on cuda ...
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:  19%|█▊        | 91/489 [00:00<00:00, 905.46it/s]Loading weights:  52%|█████▏    | 253/489 [00:00<00:00, 1324.43it/s]Loading weights:  79%|███████▉  | 386/489 [00:00<00:00, 1297.68it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 1364.05it/s]
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:  62%|██████▏   | 301/489 [00:00<00:00, 2975.65it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 2928.08it/s]
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+[setup] policy_replan_horizon=50 / 50
+[robosuite WARNING] No private macro file found! (macros.py:53)
+WARNING:robosuite_logs:No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+WARNING:robosuite_logs:It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/youngsoo/miniforge3/envs/lerobot/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+WARNING:robosuite_logs:To setup, run: python /home/youngsoo/miniforge3/envs/lerobot/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+[1/50] seed=0 success=False collided=True safe=False coll_step=203 intervene=40 min_h=-0.0662 steps=500 (197.3s)
+[2/50] seed=1 success=False collided=True safe=False coll_step=207 intervene=36 min_h=-0.0766 steps=500 (177.0s)
+[3/50] seed=2 success=False collided=False safe=False coll_step=-1 intervene=36 min_h=-0.0829 steps=500 (193.5s)
+[4/50] seed=3 success=False collided=True safe=False coll_step=203 intervene=27 min_h=-0.1281 steps=500 (196.5s)
+[5/50] seed=4 success=False collided=True safe=False coll_step=206 intervene=28 min_h=-0.1105 steps=500 (209.0s)
+[6/50] seed=5 success=False collided=True safe=False coll_step=204 intervene=34 min_h=-0.0512 steps=500 (194.9s)
+[7/50] seed=6 success=True collided=False safe=True coll_step=-1 intervene=28 min_h=-0.0726 steps=500 (166.2s)
+[8/50] seed=7 success=False collided=True safe=False coll_step=203 intervene=39 min_h=-0.0415 steps=500 (162.3s)
+[9/50] seed=8 success=False collided=True safe=False coll_step=207 intervene=29 min_h=-0.0583 steps=500 (148.5s)
+[10/50] seed=9 success=False collided=True safe=False coll_step=210 intervene=17 min_h=-0.0204 steps=500 (201.3s)
+[11/50] seed=10 success=True collided=False safe=True coll_step=-1 intervene=27 min_h=-0.0234 steps=500 (194.7s)
+[12/50] seed=11 success=False collided=True safe=False coll_step=204 intervene=10 min_h=-0.0233 steps=500 (150.8s)
+[13/50] seed=12 success=True collided=True safe=False coll_step=212 intervene=36 min_h=-0.0564 steps=500 (180.9s)
+[14/50] seed=13 success=False collided=True safe=False coll_step=211 intervene=35 min_h=-0.0288 steps=500 (204.0s)
+[15/50] seed=14 success=False collided=True safe=False coll_step=206 intervene=28 min_h=-0.1376 steps=500 (197.5s)
+[16/50] seed=15 success=False collided=True safe=False coll_step=205 intervene=23 min_h=-0.059 steps=500 (191.2s)
+[17/50] seed=16 success=False collided=True safe=False coll_step=211 intervene=10 min_h=-0.0245 steps=500 (205.7s)
+[18/50] seed=17 success=True collided=False safe=True coll_step=-1 intervene=29 min_h=-0.0791 steps=500 (163.9s)

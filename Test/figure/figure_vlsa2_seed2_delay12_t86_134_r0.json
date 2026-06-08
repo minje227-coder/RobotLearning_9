@@ -1,0 +1,64 @@
+{
+  "label": "figure_vlsa2_seed2_delay12_t86_134_r0",
+  "safety_arms": [
+    0,
+    1
+  ],
+  "cbf": {
+    "margin": 0.04,
+    "alpha": 0.5,
+    "scale": 0.166,
+    "damping": 0.05
+  },
+  "success_criterion": {
+    "type": "both_objects_inside_black_box",
+    "objects": [
+      "milk_1",
+      "orange_juice_1"
+    ],
+    "z_pad": 0.05
+  },
+  "policy_replan_horizon": {
+    "requested": 50,
+    "robot0": 50,
+    "robot1": 50
+  },
+  "robot0_policy": "/home/youngsoo/workspace/vlsa_smolvla_robot0_v4/checkpoints/015000/pretrained_model",
+  "robot1_policy": "/home/youngsoo/workspace/vlsa_smolvla_robot1_v4/checkpoints/015000/pretrained_model",
+  "num_episodes": 1,
+  "seeds": [
+    2
+  ],
+  "max_steps": 500,
+  "TSR": 0.0,
+  "CAR": 1.0,
+  "safe_success_rate": 0.0,
+  "n_success": 0,
+  "n_collided": 0,
+  "episodes": [
+    {
+      "seed": 2,
+      "success": false,
+      "collided": false,
+      "safe_success": false,
+      "collision_step": -1,
+      "collision_geoms": "",
+      "grasp0_step": 56,
+      "grasp1_step": 175,
+      "steps": 500,
+      "n_intervene": 36,
+      "min_h": -0.031,
+      "wall_sec": 280.2,
+      "milk_inside": false,
+      "orange_inside": false,
+      "milk_z": 0.97,
+      "milk_dist_box": 0.248,
+      "milk_local_z": 0.07,
+      "orange_z": 0.97,
+      "orange_dist_box": 0.21,
+      "orange_local_z": 0.07,
+      "video_overlay": "/home/youngsoo/workspace/RobotLearning_9/Test/figure/figure_vlsa2_seed2_delay12_t86_134_r0_seed2_trajectory.mp4",
+      "video": "/home/youngsoo/workspace/RobotLearning_9/Test/figure/figure_vlsa2_seed2_delay12_t86_134_r0_seed2.mp4"
+    }
+  ]
+}

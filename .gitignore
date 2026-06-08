@@ -29,3 +29,7 @@ __pycache__/
 dataset_3view_v2/
 Test/results/*.log
 Test/results/smoke.*
+
+# sshfs temp artifacts
+.fuse_hidden*
+**/.fuse_hidden*

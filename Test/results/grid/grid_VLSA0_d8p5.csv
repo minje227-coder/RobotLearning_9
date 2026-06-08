@@ -1,0 +1,11 @@
+seed,success,collided,safe_success,collision_step,collision_geoms,grasp0_step,grasp1_step,steps,n_intervene,min_h,wall_sec,milk_inside,orange_inside,milk_z,milk_dist_box,milk_local_z,orange_z,orange_dist_box,orange_local_z
+0,False,True,False,94,gripper0_hand_collision | gripper1_hand_collision,55,182,500,0,,206.3,False,False,0.927,0.679,0.027,0.97,0.724,0.07
+1,False,True,False,96,gripper0_hand_collision | gripper1_hand_collision,57,180,500,0,,199.4,False,False,0.97,0.407,0.07,0.927,0.819,0.027
+2,False,True,False,94,gripper0_hand_collision | gripper1_hand_collision,56,157,500,0,,200.6,False,False,0.927,0.744,0.027,0.926,0.799,0.026
+3,False,True,False,97,gripper0_hand_collision | gripper1_hand_collision,59,156,500,0,,192.9,False,False,0.97,0.32,0.07,0.926,0.631,0.026
+4,False,True,False,97,gripper0_hand_collision | gripper1_hand_collision,59,145,500,0,,194.9,False,False,0.97,0.539,0.07,0.97,0.697,0.07
+5,False,True,False,96,gripper0_hand_collision | gripper1_hand_collision,56,180,500,0,,185.1,False,False,0.97,0.814,0.07,0.927,0.851,0.027
+6,False,True,False,94,gripper0_hand_collision | gripper1_hand_collision,54,153,500,0,,189.3,False,False,0.926,0.922,0.026,0.926,0.746,0.026
+7,False,True,False,97,gripper0_hand_collision | gripper1_hand_collision,58,178,500,0,,192.5,False,False,0.969,0.443,0.069,0.927,0.833,0.027
+8,False,True,False,96,gripper0_hand_collision | gripper1_hand_collision,58,143,500,0,,198.4,False,False,0.97,0.566,0.07,0.926,0.595,0.026
+9,False,True,False,96,gripper0_hand_collision | gripper1_hand_collision,56,168,500,0,,122.8,False,False,0.97,0.808,0.07,0.926,0.627,0.026

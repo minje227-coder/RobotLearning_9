@@ -1,0 +1,40 @@
+[setup] loading policies on cuda ...
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:  68%|██████▊   | 333/489 [00:00<00:00, 3169.17it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 3149.46it/s]
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:  66%|██████▋   | 324/489 [00:00<00:00, 3236.58it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 3577.49it/s]
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+[setup] policy_replan_horizon=10 / 10
+[robosuite WARNING] No private macro file found! (macros.py:53)
+WARNING:robosuite_logs:No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+WARNING:robosuite_logs:It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/youngsoo/miniforge3/envs/lerobot/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+WARNING:robosuite_logs:To setup, run: python /home/youngsoo/miniforge3/envs/lerobot/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+[1/10] seed=0 success=False collided=True safe=False coll_step=99 intervene=28 min_h=-0.0925 steps=500 (134.6s)
+[2/10] seed=1 success=False collided=True safe=False coll_step=185 intervene=43 min_h=-0.102 steps=500 (69.4s)
+[3/10] seed=2 success=False collided=True safe=False coll_step=94 intervene=51 min_h=-0.074 steps=500 (166.9s)
+[4/10] seed=3 success=True collided=True safe=False coll_step=189 intervene=38 min_h=-0.076 steps=500 (167.0s)
+[5/10] seed=4 success=False collided=True safe=False coll_step=189 intervene=21 min_h=-0.0753 steps=500 (162.9s)
+[6/10] seed=5 success=False collided=True safe=False coll_step=100 intervene=37 min_h=-0.0839 steps=500 (158.3s)
+[7/10] seed=6 success=False collided=True safe=False coll_step=186 intervene=34 min_h=-0.0629 steps=500 (177.9s)
+[8/10] seed=7 success=False collided=True safe=False coll_step=185 intervene=45 min_h=-0.0783 steps=500 (167.1s)
+[9/10] seed=8 success=False collided=True safe=False coll_step=192 intervene=39 min_h=-0.0644 steps=500 (165.6s)
+[10/10] seed=9 success=False collided=True safe=False coll_step=189 intervene=45 min_h=-0.074 steps=500 (159.1s)
+
+========== SUMMARY ==========
+label   : r10_VLSA1_d8
+episodes: 10  (seeds 0..9)
+TSR (task success rate)      : 10.00%  (1/10)
+CAR (collision avoidance)    : 0.00%  (0/10)
+safe-success (succ & no coll): 0.00%
+csv : results/grid_replan10/r10_VLSA1_d8.csv
+json: results/grid_replan10/r10_VLSA1_d8.json

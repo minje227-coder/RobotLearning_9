@@ -1,0 +1,80 @@
+[setup] loading policies on cuda ...
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:  25%|██▌       | 124/489 [00:00<00:00, 1234.76it/s]Loading weights:  53%|█████▎    | 257/489 [00:00<00:00, 1283.60it/s]Loading weights:  94%|█████████▍| 461/489 [00:00<00:00, 1624.95it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 1579.26it/s]
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+Loading  HuggingFaceTB/SmolVLM2-500M-Video-Instruct weights ...
+Loading weights:   0%|          | 0/489 [00:00<?, ?it/s]Loading weights:  27%|██▋       | 131/489 [00:00<00:00, 1254.69it/s]Loading weights:  53%|█████▎    | 257/489 [00:00<00:00, 1024.30it/s]Loading weights:  91%|█████████▏| 447/489 [00:00<00:00, 1365.34it/s]Loading weights: 100%|██████████| 489/489 [00:00<00:00, 1338.62it/s]
+Reducing the number of VLM layers to 16 ...
+Loading weights from local directory
+[setup] policy_replan_horizon=50 / 50
+[robosuite WARNING] No private macro file found! (macros.py:53)
+WARNING:robosuite_logs:No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+WARNING:robosuite_logs:It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/youngsoo/miniforge3/envs/lerobot/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+WARNING:robosuite_logs:To setup, run: python /home/youngsoo/miniforge3/envs/lerobot/lib/python3.12/site-packages/robosuite/scripts/setup_macros.py
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+Users of this version of Gym should be able to simply replace 'import gym' with 'import gymnasium as gym' in the vast majority of cases.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+[1/50] seed=0 success=False collided=True safe=False coll_step=94 intervene=0 min_h=None steps=500 (154.4s)
+[2/50] seed=1 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (162.4s)
+[3/50] seed=2 success=False collided=True safe=False coll_step=94 intervene=0 min_h=None steps=500 (150.1s)
+[4/50] seed=3 success=False collided=True safe=False coll_step=98 intervene=0 min_h=None steps=500 (142.9s)
+[5/50] seed=4 success=False collided=True safe=False coll_step=98 intervene=0 min_h=None steps=500 (147.9s)
+[6/50] seed=5 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (145.4s)
+[7/50] seed=6 success=False collided=True safe=False coll_step=94 intervene=0 min_h=None steps=500 (144.6s)
+[8/50] seed=7 success=False collided=True safe=False coll_step=98 intervene=0 min_h=None steps=500 (144.0s)
+[9/50] seed=8 success=False collided=True safe=False coll_step=96 intervene=0 min_h=None steps=500 (145.1s)
+[10/50] seed=9 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (146.9s)
+[11/50] seed=10 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (142.5s)
+[12/50] seed=11 success=False collided=True safe=False coll_step=100 intervene=0 min_h=None steps=500 (145.5s)
+[13/50] seed=12 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (148.4s)
+[14/50] seed=13 success=False collided=True safe=False coll_step=99 intervene=0 min_h=None steps=500 (150.5s)
+[15/50] seed=14 success=False collided=True safe=False coll_step=98 intervene=0 min_h=None steps=500 (139.6s)
+[16/50] seed=15 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (142.6s)
+[17/50] seed=16 success=False collided=True safe=False coll_step=101 intervene=0 min_h=None steps=500 (145.8s)
+[18/50] seed=17 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (145.7s)
+[19/50] seed=18 success=False collided=True safe=False coll_step=98 intervene=0 min_h=None steps=500 (153.9s)
+[20/50] seed=19 success=False collided=True safe=False coll_step=96 intervene=0 min_h=None steps=500 (144.4s)
+[21/50] seed=20 success=False collided=True safe=False coll_step=96 intervene=0 min_h=None steps=500 (147.0s)
+[22/50] seed=21 success=False collided=True safe=False coll_step=95 intervene=0 min_h=None steps=500 (146.5s)
+[23/50] seed=22 success=False collided=True safe=False coll_step=96 intervene=0 min_h=None steps=500 (151.7s)
+[24/50] seed=23 success=False collided=True safe=False coll_step=95 intervene=0 min_h=None steps=500 (146.6s)
+[25/50] seed=24 success=False collided=True safe=False coll_step=96 intervene=0 min_h=None steps=500 (158.1s)
+[26/50] seed=25 success=False collided=True safe=False coll_step=99 intervene=0 min_h=None steps=500 (166.6s)
+[27/50] seed=26 success=False collided=True safe=False coll_step=96 intervene=0 min_h=None steps=500 (159.8s)
+[28/50] seed=27 success=False collided=True safe=False coll_step=94 intervene=0 min_h=None steps=500 (173.8s)
+[29/50] seed=28 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (166.6s)
+[30/50] seed=29 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (169.2s)
+[31/50] seed=30 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (176.0s)
+[32/50] seed=31 success=False collided=True safe=False coll_step=95 intervene=0 min_h=None steps=500 (179.9s)
+[33/50] seed=32 success=False collided=True safe=False coll_step=98 intervene=0 min_h=None steps=500 (177.0s)
+[34/50] seed=33 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (172.1s)
+[35/50] seed=34 success=False collided=True safe=False coll_step=100 intervene=0 min_h=None steps=500 (184.0s)
+[36/50] seed=35 success=False collided=True safe=False coll_step=100 intervene=0 min_h=None steps=500 (171.0s)
+[37/50] seed=36 success=False collided=True safe=False coll_step=104 intervene=0 min_h=None steps=500 (179.1s)
+[38/50] seed=37 success=False collided=True safe=False coll_step=98 intervene=0 min_h=None steps=500 (167.5s)
+[39/50] seed=38 success=False collided=True safe=False coll_step=95 intervene=0 min_h=None steps=500 (169.3s)
+[40/50] seed=39 success=False collided=True safe=False coll_step=98 intervene=0 min_h=None steps=500 (167.1s)
+[41/50] seed=40 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (164.6s)
+[42/50] seed=41 success=False collided=True safe=False coll_step=100 intervene=0 min_h=None steps=500 (173.5s)
+[43/50] seed=42 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (170.8s)
+[44/50] seed=43 success=False collided=True safe=False coll_step=93 intervene=0 min_h=None steps=500 (172.8s)
+[45/50] seed=44 success=True collided=True safe=False coll_step=103 intervene=0 min_h=None steps=500 (183.5s)
+[46/50] seed=45 success=False collided=True safe=False coll_step=222 intervene=0 min_h=None steps=500 (179.2s)
+[47/50] seed=46 success=False collided=True safe=False coll_step=96 intervene=0 min_h=None steps=500 (182.8s)
+[48/50] seed=47 success=False collided=True safe=False coll_step=105 intervene=0 min_h=None steps=500 (177.1s)
+[49/50] seed=48 success=False collided=True safe=False coll_step=97 intervene=0 min_h=None steps=500 (166.8s)
+[50/50] seed=49 success=False collided=True safe=False coll_step=98 intervene=0 min_h=None steps=500 (177.2s)
+
+========== SUMMARY ==========
+label   : s50_VLSA0_d10p5
+episodes: 50  (seeds 0..49)
+TSR (task success rate)      : 2.00%  (1/50)
+CAR (collision avoidance)    : 0.00%  (0/50)
+safe-success (succ & no coll): 0.00%
+csv : results/grid_s50/s50_VLSA0_d10p5.csv
+json: results/grid_s50/s50_VLSA0_d10p5.json

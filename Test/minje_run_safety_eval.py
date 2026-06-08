@@ -57,9 +57,13 @@ ELLIPSOID_COLORS = {
     "grip_site": (255, 0, 0),
     "link7": (0, 255, 0),
 }
-ELLIPSOID_INTERVENE_COLORS = {
+ELLIPSOID_INTERVENE_COLORS = {           # robot0 intervene: cyan / magenta
     "grip_site": (0, 255, 255),
     "link7": (255, 0, 255),
+}
+ELLIPSOID_INTERVENE_COLORS_R1 = {        # robot1 intervene: yellow / orange
+    "grip_site": (255, 255, 0),
+    "link7": (255, 140, 0),
 }
 ELLIPSOID_THICKNESS = 2
 SUCCESS_BOX_COLOR = (0, 255, 0)
@@ -358,12 +362,18 @@ def _overlay_future_trajectories_on_camera_image(
     return out
 
 
-def _overlay_ellipsoids_on_camera_image(img: np.ndarray, sim, env, camera_name: str, obs: dict, intervened: bool) -> np.ndarray:
+def _overlay_ellipsoids_on_camera_image(img: np.ndarray, sim, env, camera_name: str, obs: dict, intervened_arms) -> np.ndarray:
     out = img.copy()
     semi_axes = np.asarray(cbf_safety.Q_EF, dtype=float)
     try:
-        palette = ELLIPSOID_INTERVENE_COLORS if intervened else ELLIPSOID_COLORS
         for ridx in [0, 1]:
+            # Per-arm color: only the arm whose CBF actually intervened this step
+            # turns to its intervene palette (robot0=cyan/magenta, robot1=yellow/orange);
+            # the other arm stays the base color (red/green).
+            if ridx in intervened_arms:
+                palette = ELLIPSOID_INTERVENE_COLORS if ridx == 0 else ELLIPSOID_INTERVENE_COLORS_R1
+            else:
+                palette = ELLIPSOID_COLORS
             targets = cbf_safety.collision_targets(
                 sim,
                 env.env.robots[ridx],
@@ -393,7 +403,7 @@ def _overlay_ellipsoids_on_camera_image(img: np.ndarray, sim, env, camera_name: 
 
 
 def build_render_frame_with_ellipsoids(env_obs: dict, sim, env, camera: str, active_policy_robots: set[int],
-                                       intervened: bool, *, success_z_pad: float,
+                                       intervened_arms, *, success_z_pad: float,
                                        future_trajectories: dict[str, np.ndarray] | None = None) -> np.ndarray:
     def preprocess_image(img):
         return np.ascontiguousarray(img[::-1]).astype(np.uint8)
@@ -403,7 +413,7 @@ def build_render_frame_with_ellipsoids(env_obs: dict, sim, env, camera: str, act
         if key not in env_obs:
             raise KeyError(f"Missing {key}. Available keys: {sorted(env_obs.keys())}")
         frame = preprocess_image(env_obs[key])
-        frame = _overlay_ellipsoids_on_camera_image(frame, sim, env, camera_name, env_obs, intervened)
+        frame = _overlay_ellipsoids_on_camera_image(frame, sim, env, camera_name, env_obs, intervened_arms)
         frame = _overlay_future_trajectories_on_camera_image(
             frame, sim, camera_name, future_trajectories or {})
         try:
@@ -495,6 +505,25 @@ def evaluate_custom_success(sim, env, *, z_pad: float) -> dict:
     }
 
 
+def object_placement(sim, env, object_name: str) -> dict:
+    """Final object placement vs the trash box: world height z and horizontal
+    distance from box center (in the box-local frame). Lets us quantify the
+    'avoided but dropped on the floor / off-target' failures."""
+    trash_obj = env.env.objects_dict["trash_can_1"]
+    obj = env.env.objects_dict[object_name]
+    tb = sim.model.body_name2id(trash_obj.root_body)
+    ob = sim.model.body_name2id(obj.root_body)
+    tp = np.asarray(sim.data.body_xpos[tb], dtype=float)
+    tr = np.asarray(sim.data.body_xmat[tb], dtype=float).reshape(3, 3)
+    op = np.asarray(sim.data.body_xpos[ob], dtype=float)
+    local = tr.T @ (op - tp)
+    return {
+        "z": round(float(op[2]), 3),                              # world height
+        "dist_box": round(float(np.hypot(local[0], local[1])), 3),  # horiz. dist from box center
+        "local_z": round(float(local[2]), 3),                      # height above box bottom
+    }
+
+
 # --------------------------------------------------------------------------- #
 # Single-episode rollout (mirrors test_model_grasp.replay_episode, dual mode,
 # without video; adds contact tracking + returns metrics).
@@ -516,11 +545,12 @@ def run_episode(args, seed: int, policy0, policy1, video_path: Path | None = Non
     overlay_frames = []
     n_intervene = 0
     min_h = float("inf")
-    step_intervened = False
+    intervened_arms = set()
+    first_intervene_step = -1
 
     def apply_cbf(action, self_idx, other_idx):
         """Wrap a policy action with the dual-arm CBF safety correction."""
-        nonlocal n_intervene, min_h, step_intervened
+        nonlocal n_intervene, min_h, first_intervene_step
         if self_idx not in safety_arms:
             return action
         side_preference = np.array([-1.0, 0.0, 0.0]) if self_idx == 0 else np.array([1.0, 0.0, 0.0])
@@ -536,7 +566,9 @@ def run_episode(args, seed: int, policy0, policy1, video_path: Path | None = Non
         min_h = min(min_h, info["h"])
         if info["intervened"]:
             n_intervene += 1
-            step_intervened = True
+            intervened_arms.add(self_idx)
+            if first_intervene_step < 0:
+                first_intervene_step = step
         return out
     # For video we also render birdview/backview (top-down clearly shows arm-arm
     # contact); metrics-only runs use the minimal policy-camera set for speed.
@@ -630,7 +662,7 @@ def run_episode(args, seed: int, policy0, policy1, video_path: Path | None = Non
             robot1_action = tmg.FIXED_ACTION.copy()
             raw_robot0_action = None
             raw_robot1_action = None
-            step_intervened = False
+            intervened_arms = set()
 
             script_robot0 = not policy_active0
             script_robot1 = not policy_active1
@@ -725,7 +757,7 @@ def run_episode(args, seed: int, policy0, policy1, video_path: Path | None = Non
                     [(policy0, policy_active0), (policy1, policy_active1)]) if pol is not None and act}
                 frames.append(tmg.build_render_frame(obs, render_camera, label_robots))
                 overlay_frames.append(build_render_frame_with_ellipsoids(
-                    obs, env.env.sim, env, render_camera, label_robots, step_intervened,
+                    obs, env.env.sim, env, render_camera, label_robots, intervened_arms,
                     success_z_pad=args.success_z_pad,
                     future_trajectories=future_trajectories))
 
@@ -778,6 +810,8 @@ def run_episode(args, seed: int, policy0, policy1, video_path: Path | None = Non
             recorder.save_episode()
         success_info = evaluate_custom_success(env.env.sim, env, z_pad=args.success_z_pad)
         success = success_info["success"]
+        _milk_place = object_placement(env.env.sim, env, "milk_1")
+        _orange_place = object_placement(env.env.sim, env, "orange_juice_1")
         if video_path is not None and frames:
             video_path.parent.mkdir(parents=True, exist_ok=True)
             imageio.mimwrite(str(video_path), frames, fps=args.fps, codec="libx264")
@@ -795,10 +829,13 @@ def run_episode(args, seed: int, policy0, policy1, video_path: Path | None = Non
             "grasp1_step": grasp1_step,
             "steps": actual_steps,
             "n_intervene": n_intervene,
+            "first_intervene_step": first_intervene_step,
             "min_h": None if min_h == float("inf") else round(min_h, 4),
             "wall_sec": round(time.time() - t0, 1),
             "milk_inside": success_info["milk_inside"],
             "orange_inside": success_info["orange_inside"],
+            "milk_z": _milk_place["z"], "milk_dist_box": _milk_place["dist_box"], "milk_local_z": _milk_place["local_z"],
+            "orange_z": _orange_place["z"], "orange_dist_box": _orange_place["dist_box"], "orange_local_z": _orange_place["local_z"],
             **({"video_overlay": str(overlay_path)} if video_path is not None and overlay_frames else {}),
         }
     finally:
